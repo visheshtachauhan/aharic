@@ -1,0 +1,402 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { ShoppingBag, Search, ChevronDown, Clock, Plus } from 'lucide-react';
+import { useOrders } from '@/hooks/useOrders';
+import { useNotifications } from '@/components/ui/notification';
+import { format, isValid } from 'date-fns';
+import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
+
+type SortOption = 'newest' | 'oldest' | 'highest' | 'lowest';
+type FilterOption = 'all' | 'pending' | 'in-progress' | 'completed';
+
+interface OrderItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  category: string;
+}
+
+interface Order {
+  _id: string;
+  table: string;
+  items: OrderItem[];
+  amount: number;
+  status: 'pending' | 'in-progress' | 'completed' | 'cancelled';
+  paymentStatus: 'pending' | 'paid' | 'failed' | 'refunded';
+  paymentMethod: 'cash' | 'card' | 'upi';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export default function OrdersPage() {
+  const router = useRouter();
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState<SortOption>('newest');
+  const [filterBy, setFilterBy] = useState<FilterOption>('all');
+  const { updateOrder } = useOrders();
+  const { addNotification } = useNotifications();
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch('/api/orders');
+      const data = await response.json();
+
+      if (data.success) {
+        setOrders(data.orders);
+      } else {
+        toast.error(data.message || 'Failed to fetch orders');
+      }
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+      toast.error('Failed to fetch orders');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Format date safely
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      return isValid(date) ? format(date, 'MMM d, yyyy h:mm a') : 'Invalid date';
+    } catch (error) {
+      return 'Invalid date';
+    }
+  };
+
+  // Filter orders based on search query and status
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = order.table.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (order.customerName && order.customerName.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    if (filterBy === 'all') return matchesSearch;
+    return matchesSearch && order.status === filterBy;
+  });
+
+  // Sort orders
+  const sortedOrders = [...filteredOrders].sort((a, b) => {
+    if (sortBy === 'newest') {
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    }
+    if (sortBy === 'oldest') {
+      return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+    }
+    if (sortBy === 'highest') {
+      return b.amount - a.amount;
+    }
+    return a.amount - b.amount;
+  });
+
+  // If showing all orders, sort by status priority (pending -> in-progress -> completed)
+  const finalOrders = filterBy === 'all' 
+    ? [
+        ...sortedOrders.filter(o => o.status === 'pending'),
+        ...sortedOrders.filter(o => o.status === 'in-progress'),
+        ...sortedOrders.filter(o => o.status === 'completed')
+      ]
+    : sortedOrders;
+
+  const handleStatusUpdate = async (orderId: string, newStatus: 'pending' | 'in-progress' | 'completed') => {
+    try {
+      updateOrder(orderId, { status: newStatus });
+      addNotification({
+        title: 'Order Updated',
+        message: `Order status changed to ${newStatus}`,
+        type: 'success'
+      });
+    } catch (error) {
+      addNotification({
+        title: 'Error',
+        message: 'Failed to update order status',
+        type: 'error'
+      });
+    }
+  };
+
+  const handlePaymentUpdate = async (orderId: string, newPaymentStatus: 'paid' | 'pending') => {
+    try {
+      updateOrder(orderId, { paymentStatus: newPaymentStatus });
+      addNotification({
+        title: 'Payment Status Updated',
+        message: `Payment marked as ${newPaymentStatus}`,
+        type: 'success'
+      });
+    } catch (error) {
+      addNotification({
+        title: 'Error',
+        message: 'Failed to update payment status',
+        type: 'error'
+      });
+    }
+  };
+
+  const getStatusBadgeColor = (status: string) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-[#FFF8E6] text-[#FFB800]';
+      case 'in-progress':
+        return 'bg-[#FFF0E6] text-[#FF7300]';
+      case 'completed':
+        return 'bg-green-50 text-green-600';
+      default:
+        return 'bg-gray-100 text-gray-600';
+    }
+  };
+
+  const getStatusColor = (status: Order['status']) => {
+    switch (status) {
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'in-progress':
+        return 'bg-blue-100 text-blue-800';
+      case 'completed':
+        return 'bg-green-100 text-green-800';
+      case 'cancelled':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getPaymentStatusColor = (status: Order['paymentStatus']) => {
+    switch (status) {
+      case 'paid':
+        return 'bg-green-100 text-green-800';
+      case 'pending':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'failed':
+        return 'bg-red-100 text-red-800';
+      case 'refunded':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getNextStatus = (currentStatus: Order['status']): Order['status'] => {
+    switch (currentStatus) {
+      case 'pending':
+        return 'in-progress';
+      case 'in-progress':
+        return 'completed';
+      case 'completed':
+        return 'completed'; // No next status
+      case 'cancelled':
+        return 'cancelled'; // No next status
+      default:
+        return 'pending';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-[#FFF6F0] p-6">
+      {/* Header */}
+      <div className="flex justify-between items-center bg-white rounded-xl p-4 shadow-sm mb-6">
+        <div className="flex items-center gap-3">
+          <ShoppingBag className="w-6 h-6 text-[#FF7300]" />
+          <h1 className="text-xl font-semibold text-[#2D2D2D]">Orders</h1>
+          <div className="flex gap-2">
+            <span className="bg-[#FFF8E6] text-[#FFB800] px-3 py-1 rounded-full text-sm font-medium">
+              {orders.filter(o => o.status === 'pending').length} pending
+            </span>
+            <span className="bg-[#FFF0E6] text-[#FF7300] px-3 py-1 rounded-full text-sm font-medium">
+              {orders.filter(o => o.status === 'in-progress').length} in progress
+            </span>
+            <span className="bg-green-50 text-green-600 px-3 py-1 rounded-full text-sm font-medium">
+              {orders.filter(o => o.status === 'completed').length} completed
+            </span>
+          </div>
+        </div>
+        <Button
+          onClick={() => router.push('/admin/orders/new')}
+          className="bg-[#FF7300] text-white hover:bg-[#FF7300]/90"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          New Order
+        </Button>
+      </div>
+
+      {/* Search and Filter */}
+      <div className="bg-white rounded-xl p-4 mb-6">
+        <div className="flex items-center gap-4 mb-4">
+          <div className="flex-1 relative">
+            <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]" />
+            <Input 
+              placeholder="Search orders by table or customer..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10 h-12 rounded-xl border-[#FF7300]/20 focus:border-[#FF7300] focus:ring-[#FF7300]/20"
+            />
+          </div>
+          <Button 
+            variant="outline" 
+            className="border-[#FF7300] text-[#FF7300] hover:bg-[#FF7300] hover:text-white"
+            onClick={() => setSortBy(sortBy === 'newest' ? 'oldest' : 'newest')}
+          >
+            Sort by {sortBy}
+            <ChevronDown className="w-4 h-4 ml-2" />
+          </Button>
+        </div>
+
+        {/* Filter Buttons */}
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setFilterBy('all')}
+            className={`rounded-full ${
+              filterBy === 'all'
+                ? 'bg-[#FF7300] text-white'
+                : 'border-[#FF7300] text-[#FF7300] hover:bg-[#FF7300] hover:text-white'
+            }`}
+          >
+            All Orders
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setFilterBy('pending')}
+            className={`rounded-full ${
+              filterBy === 'pending'
+                ? 'bg-[#FFB800] text-white'
+                : 'border-[#FFB800] text-[#FFB800] hover:bg-[#FFB800] hover:text-white'
+            }`}
+          >
+            Pending
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setFilterBy('in-progress')}
+            className={`rounded-full ${
+              filterBy === 'in-progress'
+                ? 'bg-[#FF7300] text-white'
+                : 'border-[#FF7300] text-[#FF7300] hover:bg-[#FF7300] hover:text-white'
+            }`}
+          >
+            In Progress
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setFilterBy('completed')}
+            className={`rounded-full ${
+              filterBy === 'completed'
+                ? 'bg-green-600 text-white'
+                : 'border-green-600 text-green-600 hover:bg-green-600 hover:text-white'
+            }`}
+          >
+            Completed
+          </Button>
+        </div>
+      </div>
+
+      {/* Orders List */}
+      <div className="space-y-4">
+        {finalOrders.map((order) => (
+          <Card key={order._id} className="p-6">
+            <div className="flex justify-between items-start mb-4">
+              <div>
+                <h3 className="text-lg font-semibold text-[#2D2D2D]">
+                  {order.table}
+                </h3>
+                <div className="flex items-center gap-2 mt-1">
+                  <Clock className="w-4 h-4 text-[#666666]" />
+                  <p className="text-sm text-[#666666]">
+                    {formatDate(order.createdAt)}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-medium text-[#2D2D2D]">₹{order.amount}</p>
+                <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
+                  {order.status}
+                </span>
+                <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(order.paymentStatus)}`}>
+                  {order.paymentStatus}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-2 mb-4">
+              {order.items.map((item, idx) => (
+                <div key={idx} className="text-sm text-[#666666] flex items-center gap-2">
+                  <span className="w-1 h-1 rounded-full bg-[#FF7300]"></span>
+                  {item.name} x{item.quantity}
+                </div>
+              ))}
+            </div>
+
+            {order.specialInstructions && (
+              <div className="mb-4 p-3 bg-[#FFF6F0] rounded-lg">
+                <p className="text-sm text-[#666666]">
+                  <span className="font-medium">Special Instructions:</span> {order.specialInstructions}
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-3 border-t border-[#FF7300]/10">
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handlePaymentUpdate(order._id, order.paymentStatus === 'pending' ? 'paid' : 'pending')}
+                  className={`rounded-full ${
+                    order.paymentStatus === 'paid'
+                      ? 'bg-green-50 text-green-600 border-green-200'
+                      : 'bg-yellow-50 text-yellow-600 border-yellow-200'
+                  }`}
+                >
+                  {order.paymentStatus === 'paid' ? 'Paid' : 'Mark as Paid'}
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                {order.status !== 'completed' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleStatusUpdate(order._id, getNextStatus(order.status))}
+                    className="rounded-full border-[#FF7300] text-[#FF7300] hover:bg-[#FF7300] hover:text-white"
+                  >
+                    {order.status === 'pending' ? 'Start Preparing' : 'Mark Complete'}
+                  </Button>
+                )}
+                {order.status !== 'cancelled' && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleStatusUpdate(order._id, 'cancelled')}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}

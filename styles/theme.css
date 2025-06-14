@@ -1,0 +1,51 @@
+:root {
+  /* Main Colors */
+  --primary: #D7263D;
+  --accent: #FFA62B;
+  --background: #FDFDFD;
+  --card: #FFFFFF;
+
+  /* Text Colors */
+  --text-primary: #222222;
+  --text-secondary: #666666;
+
+  /* Status Colors */
+  --status-success: #1B9C85;
+  --status-pending: #F4A261;
+  --status-delayed: #D7263D;
+  --status-neutral: #007BFF;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+
+  /* Transitions */
+  --transition-base: all 0.2s ease-in-out;
+  --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Font configurations */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600;700&display=swap');
+
+.font-heading {
+  font-family: 'Inter', sans-serif;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+}
+
+.font-body {
+  font-family: 'Inter', sans-serif;
+  font-weight: 400;
+}
+
+.font-numeric {
+  font-family: 'Poppins', monospace;
+  font-weight: 500;
+}
+
+.button-text {
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 600;
+} 
