@@ -2,44 +2,21 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Card } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Store, Users, ShoppingBag, Bell, Search, MenuIcon, CheckCircle } from 'lucide-react';
-import { NotificationPanel, useNotifications } from '@/components/ui/notification';
-import { useOrders } from '@/hooks/useOrders';
-import { CursorEffect } from '@/components/effects/CursorEffect';
-import { AnimatedNumber } from '@/components/effects/AnimatedNumber';
-import { AIInsightTooltip } from '@/components/effects/AIInsightTooltip';
-import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/app/providers';
-import { Order, OrderStatus } from '@/types/order';
-
-interface Table {
-  number: string;
-  status: 'available' | 'occupied' | 'reserved' | 'maintenance';
-}
 
 export default function DashboardContent() {
   const router = useRouter();
-  const { session, isLoading } = useAuth();
-  const { notifications, addNotification, dismissNotification } = useNotifications();
-  const { 
-    orders, 
-    getOrdersByStatus, 
-    getOrdersByPaymentStatus,
-    calculateDailySales,
-    calculateTotalSales
-  } = useOrders();
+  const { user, loading } = useAuth();
 
   // Redirect if not authenticated
   useEffect(() => {
-    if (!isLoading && !session) {
+    if (!loading && !user) {
       router.push('/auth/login');
     }
-  }, [session, isLoading, router]);
+  }, [user, loading, router]);
 
   // Show loading state
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-[#FF7300]"></div>

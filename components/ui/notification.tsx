@@ -1,6 +1,5 @@
 'use client';
 
-import { toast } from 'sonner';
 import { X } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useCallback } from "react";
@@ -68,6 +67,10 @@ export function NotificationPanel({ notifications, onDismiss }: NotificationPane
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
+  const dismissNotification = useCallback((id: string) => {
+    setNotifications((prev) => prev.filter((notification) => notification.id !== id));
+  }, []);
+
   const addNotification = useCallback((notification: Omit<Notification, "id">) => {
     const id = Math.random().toString(36).substring(7);
     setNotifications((prev) => [...prev, { ...notification, id }]);
@@ -76,15 +79,11 @@ export function useNotifications() {
     setTimeout(() => {
       dismissNotification(id);
     }, 5000);
-  }, []);
-
-  const dismissNotification = useCallback((id: string) => {
-    setNotifications((prev) => prev.filter((notification) => notification.id !== id));
-  }, []);
+  }, [dismissNotification]);
 
   return {
     notifications,
     addNotification,
     dismissNotification,
   };
-} 
+}

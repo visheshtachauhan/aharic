@@ -2,8 +2,12 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
+type MenuQuery = {
+  category?: string;
+  $or?: Array<{ [key: string]: { $regex: string; $options: string } }>;
+};
+
 export async function GET(request: Request) {
-  let db;
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
@@ -11,11 +15,11 @@ export async function GET(request: Request) {
     const category = searchParams.get('category');
     const search = searchParams.get('search');
 
-    db = await connectToDatabase();
+    const { db } = await connectToDatabase();
     const skip = (page - 1) * limit;
 
     // Build query based on filters
-    const query: any = {};
+    const query: MenuQuery = {};
     if (category) query.category = category;
     if (search) {
       query.$or = [
@@ -56,7 +60,6 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
-  let db;
   try {
     const body = await request.json();
 
@@ -82,7 +85,7 @@ export async function POST(request: Request) {
       }, { status: 400 });
     }
 
-    db = await connectToDatabase();
+    const { db } = await connectToDatabase();
 
     // Check if item with same name exists in the same category
     const existingItem = await db.collection('menu').findOne({
@@ -124,7 +127,6 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  let db;
   try {
     const body = await request.json();
 
@@ -157,7 +159,7 @@ export async function PUT(request: Request) {
       }, { status: 400 });
     }
 
-    db = await connectToDatabase();
+    const { db } = await connectToDatabase();
 
     // Check if item exists
     const existingItem = await db.collection('menu').findOne({
@@ -220,55 +222,3 @@ export async function PUT(request: Request) {
     }, { status: 500 });
   }
 }
-
-export async function DELETE(request: Request) {
-  let db;
-  try {
-    const { searchParams } = new URL(request.url);
-    const id = searchParams.get('id');
-
-    if (!id) {
-      return NextResponse.json({
-        success: false,
-        message: 'Item ID is required'
-      }, { status: 400 });
-    }
-
-    db = await connectToDatabase();
-
-    // Check if item exists
-    const existingItem = await db.collection('menu').findOne({
-      _id: new ObjectId(id)
-    });
-
-    if (!existingItem) {
-      return NextResponse.json({
-        success: false,
-        message: 'Item not found'
-      }, { status: 404 });
-    }
-
-    // Delete menu item
-    const result = await db.collection('menu').deleteOne({
-      _id: new ObjectId(id)
-    });
-
-    if (result.deletedCount === 0) {
-      return NextResponse.json({
-        success: false,
-        message: 'Failed to delete item'
-      }, { status: 400 });
-    }
-
-    return NextResponse.json({
-      success: true,
-      message: 'Menu item deleted successfully'
-    });
-  } catch (error) {
-    console.error('Error deleting menu item:', error);
-    return NextResponse.json({
-      success: false,
-      message: error instanceof Error ? error.message : 'Failed to delete menu item'
-    }, { status: 500 });
-  }
-} 

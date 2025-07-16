@@ -38,9 +38,19 @@ export default function PhoneVerification({
 
     setLoading(true);
     try {
-      // TODO: Implement OTP sending logic
-      // For now, we'll simulate it
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/auth/otp', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phoneNumber }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to send OTP');
+      }
+
       setStep('otp');
       addNotification({
         title: 'Success',
@@ -50,7 +60,7 @@ export default function PhoneVerification({
     } catch (error) {
       addNotification({
         title: 'Error',
-        message: 'Failed to send OTP',
+        message: error instanceof Error ? error.message : 'Failed to send OTP',
         type: 'error'
       });
     } finally {
@@ -70,9 +80,19 @@ export default function PhoneVerification({
 
     setLoading(true);
     try {
-      // TODO: Implement OTP verification logic
-      // For now, we'll simulate it
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      const response = await fetch('/api/auth/otp', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phoneNumber, otp }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to verify OTP');
+      }
+
       onVerified(phoneNumber);
       onClose();
       addNotification({
@@ -83,7 +103,7 @@ export default function PhoneVerification({
     } catch (error) {
       addNotification({
         title: 'Error',
-        message: 'Failed to verify OTP',
+        message: error instanceof Error ? error.message : 'Failed to verify OTP',
         type: 'error'
       });
     } finally {

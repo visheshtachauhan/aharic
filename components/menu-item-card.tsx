@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { StarIcon, PlusIcon, Flame } from "lucide-react"
 import { useCart } from "@/contexts/cart-context"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 
 interface MenuItem {
@@ -29,7 +29,6 @@ interface MenuItemCardProps {
 
 export function MenuItemCard({ item, className }: MenuItemCardProps) {
   const { addItem } = useCart()
-  const { toast } = useToast()
 
   const handleAddToCart = () => {
     addItem({
@@ -38,10 +37,7 @@ export function MenuItemCard({ item, className }: MenuItemCardProps) {
       price: item.price,
       image: item.image,
     })
-    toast({
-      title: "Added to cart",
-      description: `${item.name} has been added to your cart.`,
-    })
+    toast.success(`${item.name} added to cart!`)
   }
 
   return (
@@ -117,4 +113,4 @@ export function MenuItemCard({ item, className }: MenuItemCardProps) {
       </Card>
     </motion.div>
   )
-} 
+}

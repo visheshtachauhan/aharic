@@ -1,24 +1,9 @@
 'use client';
 
-import { motion, useAnimation, useMotionValue, useSpring, useTransform, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useRef } from "react";
-import { Montserrat, Raleway, Quicksand } from 'next/font/google';
-
-const montserrat = Montserrat({ 
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700']
-});
-
-const raleway = Raleway({ 
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700']
-});
-
-const quicksand = Quicksand({ 
-  subsets: ['latin'],
-  weight: ['300', '400', '500', '600', '700']
-});
+import { useEffect, useState, useRef, useLayoutEffect, useCallback } from "react";
+import { useSpring } from "framer-motion";
 
 const DreamySparkle = ({ delay = 0 }: { delay?: number }) => (
   <motion.div
@@ -220,18 +205,16 @@ const CursorEffect = () => {
     const updateCursor = (e: MouseEvent) => {
       setPosition({ x: e.clientX, y: e.clientY });
       
-      // Rotate cursor based on movement with reduced rotation
       const speed = Math.sqrt(e.movementX ** 2 + e.movementY ** 2);
       cursorRotation.set(speed * (e.movementX > 0 ? 0.5 : -0.5));
       
-      // Add sparkles with varying colors
-      if (Math.random() > 0.7) { // Reduced sparkle frequency
+      if (Math.random() > 0.7) {
         const colors = [
-          'rgba(147, 197, 253, 0.8)', // blue-300
-          'rgba(103, 232, 249, 0.8)', // cyan-300
-          'rgba(165, 243, 252, 0.8)', // cyan-200
-          'rgba(186, 230, 253, 0.8)', // sky-200
-          'rgba(224, 242, 254, 0.8)', // sky-100
+          'rgba(147, 197, 253, 0.8)',
+          'rgba(103, 232, 249, 0.8)',
+          'rgba(165, 243, 252, 0.8)',
+          'rgba(186, 230, 253, 0.8)',
+          'rgba(224, 242, 254, 0.8)',
         ];
         const newSparkle = {
           x: e.clientX + (Math.random() - 0.5) * 20,
@@ -247,134 +230,64 @@ const CursorEffect = () => {
       }
     };
 
-    const updateCursorType = () => {
-      const hoveredElement = document.elementFromPoint(position.x, position.y);
-      const isInteractive = !!hoveredElement?.matches('button, a, input, [role="button"]');
-      setIsPointer(isInteractive);
-      cursorSize.set(isInteractive ? 12 : 8);
-      cursorOpacity.set(isInteractive ? 1 : 0.8);
+    const updateCursorType = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest('button, a')) {
+        setIsPointer(true);
+        cursorSize.set(16);
+        cursorOpacity.set(0.4);
+      } else {
+        setIsPointer(false);
+        cursorSize.set(8);
+        cursorOpacity.set(0.8);
+      }
     };
 
-    document.addEventListener('mousemove', updateCursor);
-    document.addEventListener('mousemove', updateCursorType);
+    window.addEventListener('mousemove', updateCursor);
+    window.addEventListener('mouseover', updateCursorType);
+
     return () => {
-      document.removeEventListener('mousemove', updateCursor);
-      document.removeEventListener('mousemove', updateCursorType);
+      window.removeEventListener('mousemove', updateCursor);
+      window.removeEventListener('mouseover', updateCursorType);
     };
-  }, [position, cursorSize, cursorOpacity, cursorRotation]);
+  }, [cursorRotation, cursorSize, cursorOpacity]);
 
   return (
     <>
-      {/* Custom Cursor */}
       <motion.div
-        className="fixed top-0 left-0 pointer-events-none z-50 mix-blend-plus-lighter"
+        className="fixed top-0 left-0 pointer-events-none z-50"
         style={{
-          x: position.x - 8,
-          y: position.y - 8,
+          width: cursorSize,
+          height: cursorSize,
+          x: position.x,
+          y: position.y,
+          translateX: '-50%',
+          translateY: '-50%',
+          opacity: cursorOpacity,
+          rotate: cursorRotation,
+          background: isPointer ? 'rgba(125, 211, 252, 0.5)' : 'rgba(255, 255, 255, 0.9)',
+          borderRadius: '50%',
+          filter: 'blur(3px)',
+          transition: 'transform 0.1s ease-out',
         }}
-      >
-        {/* Main Cursor */}
-        <motion.div 
-          className="relative"
-          style={{ 
-            width: cursorSize,
-            height: cursorSize,
-            rotate: cursorRotation,
-            opacity: cursorOpacity,
-            transform: `translate(-50%, -50%)`,
-          }}
-        >
-          {/* Core */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-b from-blue-400 via-cyan-300 to-sky-200" />
-          
-          {/* Inner glow */}
-          <div className="absolute inset-0 rounded-full bg-gradient-to-tr from-cyan-200 to-transparent opacity-50 blur-[2px]" />
-          
-          {/* Outer ring */}
-          <div className="absolute -inset-1 rounded-full border border-cyan-200/30" />
-          
-          {/* Ambient glow */}
-          <div className="absolute -inset-2 rounded-full bg-cyan-300/20 blur-md" />
-          
-          {/* Interactive state effects */}
-          {isPointer && (
-            <>
-              <motion.div
-                className="absolute -inset-4 rounded-full border-2 border-cyan-200/30"
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1.5, opacity: 0 }}
-                transition={{ duration: 1, repeat: Infinity }}
-              />
-              <motion.div
-                className="absolute -inset-3 rounded-full border border-cyan-100/20"
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1.2, opacity: 0.5 }}
-                transition={{ duration: 0.8, repeat: Infinity }}
-              />
-            </>
-          )}
-        </motion.div>
-      </motion.div>
-
-      {/* Enhanced Sparkle Trail */}
+      />
       {sparkles.map(sparkle => (
         <motion.div
           key={sparkle.id}
-          className="fixed top-0 left-0 pointer-events-none z-40"
-          style={{ x: sparkle.x, y: sparkle.y }}
-        >
-          {/* Main sparkle */}
-          <motion.div
-            className="absolute w-2 h-2 -translate-x-1 -translate-y-1"
-            style={{ background: sparkle.color, borderRadius: '50%' }}
-            initial={{ scale: 0.8, opacity: 0.8 }}
-            animate={{
-              scale: [0.8, 0.4, 0],
-              opacity: [0.8, 0.4, 0],
-            }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-          />
-          
-          {/* Glow effect */}
-          <motion.div
-            className="absolute w-3 h-3 -translate-x-1.5 -translate-y-1.5 blur-sm"
-            style={{ background: sparkle.color, borderRadius: '50%' }}
-            initial={{ scale: 1, opacity: 0.4 }}
-            animate={{
-              scale: [1, 0.5, 0],
-              opacity: [0.4, 0.2, 0],
-            }}
-            transition={{ duration: 1, ease: "easeOut" }}
-          />
-          
-          {/* Outer particles */}
-          {[...Array(4)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 -translate-x-0.5 -translate-y-0.5"
-              style={{ 
-                background: sparkle.color,
-                borderRadius: '50%',
-              }}
-              initial={{
-                x: 0,
-                y: 0,
-                scale: 0.5,
-                opacity: 0.6,
-              }}
-              animate={{
-                x: Math.cos(i * Math.PI / 2) * 10,
-                y: Math.sin(i * Math.PI / 2) * 10,
-                scale: 0,
-                opacity: 0,
-              }}
-              transition={{
-                duration: 0.6,
-                ease: "easeOut",
-              }}
-            />
-          ))}
-        </motion.div>
+          className="fixed top-0 left-0 pointer-events-none z-50"
+          style={{
+            x: sparkle.x,
+            y: sparkle.y,
+            width: 4,
+            height: 4,
+            background: sparkle.color,
+            borderRadius: '50%',
+            filter: 'blur(2px)',
+          }}
+          initial={{ scale: 0, opacity: 1 }}
+          animate={{ scale: [1, 1.5, 0], opacity: [1, 0.5, 0] }}
+          transition={{ duration: 1, ease: "easeOut" }}
+        />
       ))}
     </>
   );
@@ -382,33 +295,26 @@ const CursorEffect = () => {
 
 const EnhancedSparkles = () => (
   <div className="fixed inset-0 overflow-hidden pointer-events-none">
-    {[...Array(60)].map((_, i) => (
+    {[...Array(20)].map((_, i) => (
       <motion.div
         key={i}
-        className="absolute w-1 h-1"
+        className="absolute w-2 h-2 rounded-full"
         style={{
+          background: 'rgba(255, 255, 255, 0.8)',
+          filter: 'blur(3px)',
+          boxShadow: '0 0 10px rgba(255, 255, 255, 0.7)',
           left: `${Math.random() * 100}%`,
           top: `${Math.random() * 100}%`,
-          background: 'white',
-          borderRadius: '50%',
-          filter: 'blur(1px)',
-          boxShadow: '0 0 4px rgba(255, 255, 255, 0.8)',
-        }}
-        initial={{ 
-          scale: 0,
-          opacity: 0,
-          y: 0
         }}
         animate={{
-          scale: [0, 1, 0],
-          opacity: [0, 0.8, 0],
-          y: -30
+          scale: [0, 1.2, 0],
+          opacity: [0, 0.9, 0],
         }}
         transition={{
-          duration: 3 + Math.random() * 2,
+          duration: 3 + Math.random() * 4,
           repeat: Infinity,
+          repeatType: "loop",
           delay: Math.random() * 5,
-          ease: "easeInOut"
         }}
       />
     ))}
@@ -417,791 +323,238 @@ const EnhancedSparkles = () => (
 
 const TypewriterText = ({ text, delay, color, className }: { text: string; delay: number; color: string; className?: string }) => {
   const characters = Array.from(text);
-  
+
   return (
-    <motion.h1
-      className={`text-5xl tracking-wide ${className}`}
-      style={{
-        color: color,
-        textShadow: '0 0 20px rgba(186, 230, 253, 0.5)',
-      }}
-    >
+    <div className={`inline-block ${className}`}>
       {characters.map((char, index) => (
         <motion.span
           key={index}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
           transition={{
-            duration: 0.2,
-            delay: delay + index * 0.03, // Faster character appearance
-            ease: "easeOut"
+            duration: 0.05,
+            delay: delay + index * 0.08,
           }}
+          style={{ color }}
         >
           {char}
         </motion.span>
       ))}
-    </motion.h1>
+    </div>
   );
 };
 
 const DreamyText = ({ isReady, onComplete }: { isReady: boolean; onComplete: () => void }) => {
-  const [startAnimation, setStartAnimation] = useState(false);
-  const [fadeOut, setFadeOut] = useState(false);
-  const glowOpacity = useSpring(0, { damping: 15, stiffness: 60 });
+  const textLines = [
+    { text: "In a world of menus...", delay: 0.5, color: '#4A5568' },
+    { text: "endless scrolling...", delay: 1.8, color: '#4A5568' },
+    { text: "and complicated choices...", delay: 3.5, color: '#4A5568' },
+    { text: "one platform awakens.", delay: 5.5, color: '#007BFF' },
+  ];
 
-  useEffect(() => {
-    if (isReady) {
-      setTimeout(() => {
-        setStartAnimation(true);
-        glowOpacity.set(0.8);
-      }, 800);
-
-      // Start fade out after all text has appeared and been visible
-      setTimeout(() => {
-        setFadeOut(true);
-        setTimeout(onComplete, 800); // Call onComplete after fade out
-      }, 3500);
-    }
-  }, [isReady, glowOpacity, onComplete]);
+  const controls = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+  };
 
   return (
-    <motion.div 
-      className="fixed inset-0 flex items-center justify-center pointer-events-none z-30"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: fadeOut ? 0 : (startAnimation ? 1 : 0) }}
-      transition={{ duration: 0.8 }}
-    >
-      {/* Main text container */}
-      <div className="relative flex flex-col items-center gap-4">
-        {startAnimation && (
-          <>
-            {/* English Welcome */}
-            <TypewriterText
-              text="Welcome, Boss"
-              delay={0.2}
-              color="#1e3a8a"
-              className="font-serif"
-            />
-
-            {/* Hindi Welcome */}
-            <TypewriterText
-              text="स्वागत है, बॉस"
-              delay={0.8} // Reduced from 1.5
-              color="#1e40af"
-              className="font-['Noto_Sans_Devanagari']"
-            />
-
-            {/* Gujarati Welcome */}
-            <TypewriterText
-              text="સ્વાગત છે, બોસ"
-              delay={1.4} // Reduced from 2.8
-              color="#1e4ed8"
-              className="font-['Noto_Sans_Gujarati']"
-            />
-          </>
-        )}
-
-        {/* Enhanced glow effect */}
-        <motion.div
-          className="absolute -inset-8"
-          style={{
-            background: 'radial-gradient(circle at center, rgba(186, 230, 253, 0.15), transparent 70%)',
-            opacity: glowOpacity,
-          }}
-          animate={{
-            scale: [1, 1.1, 1],
-            opacity: [0.1, 0.2, 0.1],
-          }}
-          transition={{
-            duration: 3,
-            repeat: Infinity,
-            ease: "easeInOut"
-          }}
-        />
-      </div>
-
-      {/* Floating orbs */}
-      {[...Array(12)].map((_, i) => {
-        // Randomly determine size class for each orb
-        const sizeClass = Math.random() > 0.7 ? 'large' : Math.random() > 0.5 ? 'medium' : 'small';
-        const sizes = {
-          large: { width: 'w-4', height: 'h-4', blur: 'blur-[2px]' },
-          medium: { width: 'w-3', height: 'h-3', blur: 'blur-[1.5px]' },
-          small: { width: 'w-2', height: 'h-2', blur: 'blur-[1px]' }
-        };
-
-        // Ethereal color variations
-        const colors = [
-          'rgba(186, 230, 253, 0.5)', // sky-200
-          'rgba(224, 242, 254, 0.5)', // sky-100
-          'rgba(186, 230, 253, 0.4)', // lighter sky-200
-          'rgba(207, 250, 254, 0.5)', // cyan-100
-        ];
-
-        return (
+    <div className="fixed inset-0 flex items-center justify-center pointer-events-none z-10">
+      <AnimatePresence onExitComplete={onComplete}>
+        {isReady && (
           <motion.div
-            key={i}
-            className={`absolute ${sizes[sizeClass].width} ${sizes[sizeClass].height} rounded-full ${sizes[sizeClass].blur}`}
-            style={{
-              background: `radial-gradient(circle at center, ${colors[i % colors.length]}, rgba(255, 255, 255, 0.2))`,
-              boxShadow: '0 0 15px rgba(186, 230, 253, 0.3)',
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              x: [0, (Math.random() - 0.5) * (sizeClass === 'large' ? 120 : 80)],
-              y: [0, (Math.random() - 0.5) * (sizeClass === 'large' ? 120 : 80)],
-              scale: [1, 1.1, 1],
-              opacity: [0.4, 0.6, 0.4],
-            }}
-            transition={{
-              duration: 5 + Math.random() * 5,
-              repeat: Infinity,
-              repeatType: "reverse",
-              ease: "easeInOut",
-              delay: i * 0.3,
-            }}
-          />
-        );
-      })}
-
-      {/* Breeze effect particles */}
-      {[...Array(30)].map((_, i) => (
-        <motion.div
-          key={`particle-${i}`}
-          className="absolute w-1 h-1"
-          style={{
-            background: 'linear-gradient(to right, rgba(186, 230, 253, 0.3), rgba(125, 211, 252, 0.15))',
-            borderRadius: '50%',
-            filter: 'blur(1px)',
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-          }}
-          animate={{
-            x: [0, 100 + Math.random() * 50],
-            y: [0, (Math.random() - 0.5) * 30],
-            opacity: [0, 0.4, 0],
-          }}
-          transition={{
-            duration: 6 + Math.random() * 4,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: i * 0.1,
-          }}
-        />
-      ))}
-    </motion.div>
+            variants={controls}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+            transition={{ duration: 0.8, ease: "easeInOut" }}
+            className="text-center"
+          >
+            {textLines.map((line, index) => (
+              <h1 key={index} className="text-4xl md:text-5xl font-light mb-4" style={{ fontFamily: "'Raleway', sans-serif" }}>
+                <TypewriterText {...line} />
+              </h1>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   );
 };
 
-const GuidingLights = ({ isReady, show }: { isReady: boolean; show: boolean }) => {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [isHovering, setIsHovering] = useState(false);
-  const [dimensions, setDimensions] = useState({ width: 1200, height: 800 });
 
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setDimensions({
-        width: window.innerWidth,
-        height: window.innerHeight
-      });
+const GuidingLights = ({ show }: { show: boolean }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
 
-      const handleResize = () => {
+  useLayoutEffect(() => {
+    const handleResize = () => {
+      if (containerRef.current) {
         setDimensions({
-          width: window.innerWidth,
-          height: window.innerHeight
+          width: containerRef.current.offsetWidth,
+          height: containerRef.current.offsetHeight,
         });
-      };
-
-      window.addEventListener('resize', handleResize);
-      return () => window.removeEventListener('resize', handleResize);
-    }
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
   const steps = [
-    { 
-      text: "Your Passion, Our Platform",
-      textStyle: {
-        background: 'linear-gradient(135deg, #1e3a8a, #1e40af, #3b82f6)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        textShadow: '0 4px 8px rgba(0,0,0,0.2)',
-        fontFamily: 'serif',
-        letterSpacing: '0.05em',
-        fontWeight: '600'
-      },
-      containerStyle: {
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255,255,255,0.3)',
-        boxShadow: '0 8px 32px rgba(30,58,138,0.3)',
-        transform: 'perspective(1000px) rotateX(5deg)',
-        borderRadius: '2rem',
-        padding: '2rem 3rem'
-      } as const,
-      backgroundAnimation: (
-        <motion.div className="absolute inset-0 overflow-hidden">
-          {/* Kitchen utensils floating */}
-          {[...Array(12)].map((_, i) => (
-            <motion.div
-              key={`utensil-${i}`}
-              className="absolute"
-              initial={{ 
-                x: Math.random() * dimensions.width,
-                y: dimensions.height + 100,
-                rotate: 0,
-                opacity: 0 
-              }}
-              animate={{
-                y: [-100, dimensions.height + 100],
-                rotate: [0, 360],
-                opacity: [0, 0.6, 0],
-              }}
-              transition={{
-                duration: 15 + Math.random() * 10,
-                repeat: Infinity,
-                delay: i * 2,
-                ease: "linear"
-              }}
-            >
-              <div 
-                className={`w-16 h-16 bg-gradient-to-br from-orange-200/30 to-yellow-200/30 backdrop-blur-sm rounded-full 
-                  flex items-center justify-center transform hover:scale-110 transition-transform`}
-                style={{
-                  boxShadow: '0 0 20px rgba(255,107,107,0.2)'
-                }}
-              >
-                <div className={`w-10 h-10 bg-gradient-to-br from-orange-300/40 to-yellow-300/40 
-                  ${i % 4 === 0 ? 'rounded-full' : 
-                    i % 4 === 1 ? 'rounded-sm rotate-45' : 
-                    i % 4 === 2 ? 'rounded-lg' : 
-                    'rounded-md'}`} />
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      )
+    {
+      title: "Effortless Setup",
+      description: "Get your digital menu live in minutes.",
+      icon: "✨",
+      textStyle: { fontFamily: "'Quicksand', sans-serif" },
     },
     {
-      text: "From Your Heart to Their Plate",
-      textStyle: {
-        background: 'linear-gradient(135deg, #1e3a8a, #2563eb, #60a5fa)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        textShadow: '0 4px 8px rgba(0,0,0,0.2)',
-        fontFamily: 'serif',
-        letterSpacing: '0.05em',
-        fontWeight: '600'
-      },
-      containerStyle: {
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255,255,255,0.3)',
-        boxShadow: '0 8px 32px rgba(37,99,235,0.3)',
-        transform: 'perspective(1000px) rotateX(-5deg)',
-        borderRadius: '2rem',
-        padding: '2rem 3rem'
-      } as const,
-      backgroundAnimation: (
-        <motion.div className="absolute inset-0 overflow-hidden">
-          {/* Cooking ingredients */}
-          {[...Array(15)].map((_, i) => (
-            <motion.div
-              key={`ingredient-${i}`}
-              className="absolute"
-              initial={{ 
-                x: Math.random() * dimensions.width,
-                y: Math.random() * dimensions.height,
-                scale: 0,
-                rotate: 0
-              }}
-              animate={{
-                x: Math.random() * dimensions.width,
-                y: Math.random() * dimensions.height,
-                scale: [0, 1, 0],
-                rotate: [0, 360],
-                opacity: [0, 0.8, 0]
-              }}
-              transition={{
-                duration: 10 + Math.random() * 5,
-                repeat: Infinity,
-                delay: i * 0.5,
-                ease: "easeInOut"
-              }}
-            >
-              <div className={`w-20 h-20 backdrop-blur-md rounded-xl flex items-center justify-center transform hover:scale-110 transition-transform
-                ${i % 3 === 0 ? 'bg-gradient-to-br from-green-400/20 to-emerald-400/20' : 
-                  i % 3 === 1 ? 'bg-gradient-to-br from-emerald-400/20 to-lime-400/20' : 
-                  'bg-gradient-to-br from-lime-400/20 to-green-400/20'}`}
-              >
-                <div className={`w-12 h-12 
-                  ${i % 4 === 0 ? 'rounded-full bg-gradient-to-br from-green-200/40 to-emerald-200/40' :
-                    i % 4 === 1 ? 'rounded bg-gradient-to-br from-emerald-200/40 to-lime-200/40' :
-                    i % 4 === 2 ? 'rounded-sm bg-gradient-to-br from-lime-200/40 to-green-200/40' :
-                    'rounded-lg bg-gradient-to-br from-green-100/40 to-emerald-100/40'
-                  }`} />
-              </div>
-            </motion.div>
-          ))}
-        </motion.div>
-      )
+      title: "Real-time Updates",
+      description: "Change prices, availability, and items instantly.",
+      icon: "🔄",
+      textStyle: { fontFamily: "'Quicksand', sans-serif" },
     },
     {
-      text: "Let's Build Something Amazing Together",
-      textStyle: {
-        background: 'linear-gradient(135deg, #1e40af, #3b82f6, #93c5fd)',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        textShadow: '0 4px 8px rgba(0,0,0,0.2)',
-        fontFamily: 'serif',
-        letterSpacing: '0.05em',
-        fontWeight: '600'
-      },
-      containerStyle: {
-        background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-        backdropFilter: 'blur(12px)',
-        border: '1px solid rgba(255,255,255,0.3)',
-        boxShadow: '0 8px 32px rgba(59,130,246,0.3)',
-        transform: 'perspective(1000px) rotateX(5deg)',
-        borderRadius: '2rem',
-        padding: '2rem 3rem'
-      } as const,
-      backgroundAnimation: (
-        <motion.div className="absolute inset-0 overflow-hidden">
-          {/* Restaurant elements */}
-          {[...Array(18)].map((_, i) => (
-            <motion.div
-              key={`restaurant-${i}`}
-              className="absolute"
-              initial={{ 
-                x: Math.random() * dimensions.width,
-                y: Math.random() * dimensions.height,
-                rotate: 0,
-                opacity: 0
-              }}
-              animate={{
-                x: Math.random() * dimensions.width,
-                y: Math.random() * dimensions.height,
-                rotate: 360,
-                opacity: [0, 0.6, 0]
-              }}
-              transition={{
-                duration: 20,
-                repeat: Infinity,
-                delay: i * 1.5,
-                ease: "easeInOut"
-              }}
-            >
-              <div className={`backdrop-blur-lg rounded-2xl p-6 transform hover:scale-110 transition-transform
-                ${i % 3 === 0 ? 'bg-gradient-to-br from-pink-400/10 to-rose-400/10' : 
-                  i % 3 === 1 ? 'bg-gradient-to-br from-rose-400/10 to-pink-400/10' : 
-                  'bg-gradient-to-br from-fuchsia-400/10 to-pink-400/10'}`}
-              >
-                <div className={`w-14 h-14 
-                  ${i % 5 === 0 ? 'rounded-full bg-gradient-to-br from-pink-200/40 to-rose-200/40' :
-                    i % 5 === 1 ? 'rounded-lg bg-gradient-to-br from-rose-200/40 to-pink-200/40' :
-                    i % 5 === 2 ? 'rounded-sm bg-gradient-to-br from-fuchsia-200/40 to-pink-200/40' :
-                    i % 5 === 3 ? 'rounded-3xl bg-gradient-to-br from-pink-100/40 to-rose-100/40' :
-                    'rounded-md bg-gradient-to-br from-rose-100/40 to-pink-100/40'
-                  }`} />
-              </div>
-            </motion.div>
-          ))}
-
-          {/* Sparkle effects */}
-          {[...Array(50)].map((_, i) => (
-            <motion.div
-              key={`sparkle-${i}`}
-              className="absolute"
-              style={{
-                width: Math.random() * 4 + 1,
-                height: Math.random() * 4 + 1,
-                background: `rgba(${244 + Math.random() * 10}, ${114 + Math.random() * 50}, ${182 + Math.random() * 5}, 0.6)`,
-                borderRadius: '50%',
-                filter: 'blur(1px)'
-              }}
-              initial={{ 
-                x: Math.random() * dimensions.width,
-                y: Math.random() * dimensions.height,
-                scale: 0
-              }}
-              animate={{
-                scale: [0, 1, 0],
-                opacity: [0, 0.8, 0],
-                y: [0, -40 - Math.random() * 60]
-              }}
-              transition={{
-                duration: 2 + Math.random() * 2,
-                repeat: Infinity,
-                delay: i * 0.1,
-                ease: "easeInOut"
-              }}
-            />
-          ))}
-        </motion.div>
-      )
-    }
+      title: "Deeper Insights",
+      description: "Understand your customers like never before.",
+      icon: "💡",
+      textStyle: { fontFamily: "'Quicksand', sans-serif" },
+    },
   ];
 
+  const [currentStep, setCurrentStep] = useState(0);
+
   useEffect(() => {
-    if (show && currentStep < steps.length - 1) {
-      const timer = setTimeout(() => {
+    const timer = setTimeout(() => {
+      if (show && currentStep < steps.length - 1) {
         setCurrentStep(prev => prev + 1);
-      }, 4000);
-      return () => clearTimeout(timer);
-    }
-  }, [show, currentStep]);
+      }
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [show, currentStep, steps.length]);
 
   return (
     <motion.div
-      className="fixed inset-0 flex items-center justify-center z-20"
+      ref={containerRef}
+      className="absolute inset-0 flex items-center justify-center pointer-events-auto z-20"
       initial={{ opacity: 0 }}
       animate={{ opacity: show ? 1 : 0 }}
-      transition={{ duration: 1.2, ease: "easeInOut" }}
+      transition={{ duration: 1, delay: 0.5 }}
     >
-      {/* Background animations container */}
-      <div className="absolute inset-0 overflow-hidden">
-        {steps.map((step, index) => (
-          <motion.div
-            key={`bg-${index}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: index === currentStep ? 1 : 0 }}
-            transition={{ duration: 1.2, ease: "easeInOut" }}
-          >
-            {step.backgroundAnimation}
-          </motion.div>
-        ))}
-      </div>
+      <div className="relative w-full max-w-5xl h-[500px]">
+        {steps.map((step, index) => {
+          const angle = (index / steps.length) * 2 * Math.PI - Math.PI / 2;
+          const radiusX = dimensions.width / 2.5;
+          const radiusY = dimensions.height / 3;
+          const x = dimensions.width / 2 + radiusX * Math.cos(angle);
+          const y = dimensions.height / 2 + radiusY * Math.sin(angle);
 
-      {/* Content container */}
-      <div className="relative flex flex-col items-center justify-center pointer-events-none max-w-4xl mx-auto px-4">
-        {steps.map((step, index) => (
-          <motion.div
-            key={index}
-            className={`absolute ${index === currentStep ? 'pointer-events-auto' : 'pointer-events-none'}`}
-            initial={{ opacity: 0, y: 40, scale: 0.9 }}
-            animate={{
-              opacity: index === currentStep ? 1 : 0,
-              y: index === currentStep ? 0 : 40,
-              scale: index === currentStep ? 1 : 0.9,
-            }}
-            transition={{ 
-              duration: 1.2,
-              ease: "easeInOut",
-              delay: index === currentStep ? 0.1 : 0
-            }}
-            onMouseEnter={() => setIsHovering(true)}
-            onMouseLeave={() => setIsHovering(false)}
-          >
-            {/* Icon */}
-            <motion.div 
-              className="flex justify-center mb-8"
-              animate={{
-                y: isHovering ? [-4, 4, -4] : 0
-              }}
-              transition={{
-                duration: 2.4,
-                repeat: Infinity,
-                ease: "easeInOut"
-              }}
-            >
-              {/* Icon content */}
-            </motion.div>
-
-            {/* Text box */}
+          return (
             <motion.div
-              className="relative px-12 py-8 rounded-2xl overflow-hidden"
-              initial={{ opacity: 1 }}
+              key={index}
+              className="absolute p-6 rounded-2xl bg-white/20 backdrop-blur-lg shadow-2xl w-64 text-center"
               style={{
-                background: step.containerStyle.background,
-                backdropFilter: step.containerStyle.backdropFilter,
-                border: step.containerStyle.border,
-                boxShadow: step.containerStyle.boxShadow,
-                transform: step.containerStyle.transform,
-                borderRadius: step.containerStyle.borderRadius,
-                padding: step.containerStyle.padding
+                left: x - 128,
+                top: y - 100,
               }}
+              initial={{ opacity: 0, scale: 0.5 }}
               animate={{
-                scale: isHovering ? 1.05 : 1,
-                rotateY: isHovering ? [0, 2, -2, 0] : 0,
-                boxShadow: isHovering
-                  ? '0 0 50px rgba(255,255,255,0.3)'
-                  : '0 0 30px rgba(255,255,255,0.1)',
+                opacity: index === currentStep ? 1 : 0.4,
+                scale: index === currentStep ? 1.1 : 1,
+                zIndex: index === currentStep ? 10 : 1,
               }}
-              transition={{ 
-                duration: 1.2, 
-                ease: "easeInOut"
-              }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
             >
-              <motion.div
-                className="absolute inset-0 opacity-0"
-                animate={{
-                  opacity: isHovering ? [0, 0.1, 0] : 0,
-                  scale: isHovering ? [0.8, 1.2, 0.8] : 1,
-                }}
-                transition={{
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-                style={{
-                  background: 'radial-gradient(circle at center, rgba(255,255,255,0.8), transparent)',
-                  filter: 'blur(20px)',
-                }}
-              />
-              
-              <motion.h2
-                className="text-7xl font-bold text-center tracking-wider relative z-10"
-                style={step.textStyle}
-                animate={{
-                  scale: isHovering ? [1, 1.05, 1] : 1,
-                  filter: isHovering ? 'brightness(1.2)' : 'brightness(1)',
-                  letterSpacing: isHovering ? '0.12em' : '0.1em',
-                }}
-                transition={{ 
-                  duration: 1.6,
-                  ease: "easeInOut",
-                  letterSpacing: {
-                    duration: 0.8,
-                    ease: "easeOut"
-                  }
-                }}
-              >
-                {step.text}
-              </motion.h2>
-
-              {/* Decorative elements */}
-              <motion.div
-                className="absolute -inset-px rounded-2xl"
-                style={{
-                  background: 'linear-gradient(45deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
-                  opacity: 0,
-                }}
-                animate={{
-                  opacity: isHovering ? [0, 0.6, 0] : 0,
-                  rotate: isHovering ? [0, 5, 0] : 0,
-                }}
-                transition={{ 
-                  duration: 2,
-                  repeat: Infinity,
-                  ease: "easeInOut"
-                }}
-              />
+              <div className="flex justify-center mb-4 text-5xl">
+                {step.icon}
+              </div>
+              <h3 className="text-xl font-semibold mb-2" style={step.textStyle}>
+                {step.title}
+              </h3>
+              <p className="text-sm text-gray-700" style={step.textStyle}>
+                {step.description}
+              </p>
             </motion.div>
-          </motion.div>
-        ))}
+          );
+        })}
       </div>
     </motion.div>
   );
 };
 
 const RippleTransition = ({ isActive, onComplete }: { isActive: boolean; onComplete: () => void }) => {
-  const [ripples, setRipples] = useState<Array<{ x: number; y: number; id: number }>>([]);
-  const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
-  const [showAurora, setShowAurora] = useState(false);
+  const [ripples, setRipples] = useState<Array<{ id: number; x: number; y: number }>>([]);
+  const mousePos = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      setMousePos({ x: e.clientX, y: e.clientY });
+      mousePos.current = { x: e.clientX, y: e.clientY };
     };
-
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, []);
 
   useEffect(() => {
     if (isActive) {
-      // Create multiple ripples from the last mouse position
-      const newRipples = Array.from({ length: 12 }, (_, i) => ({
-        x: mousePos.x,
-        y: mousePos.y,
-        id: Date.now() + i,
-      }));
-      setRipples(prev => [...prev, ...newRipples]);
-
-      // Show aurora effect after ripples start
-      setTimeout(() => setShowAurora(true), 800);
-
-      // Trigger the completion callback after animation
-      setTimeout(onComplete, 2000);
+      setRipples([{ id: Date.now(), x: mousePos.current.x, y: mousePos.current.y }]);
     }
-  }, [isActive, mousePos.x, mousePos.y, onComplete]);
+  }, [isActive]);
 
   return (
-    <AnimatePresence>
-      {isActive && (
+    <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
+      {ripples.map(ripple => (
         <motion.div
-          className="fixed inset-0 pointer-events-none z-50"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          {/* Aurora Effect */}
-          <motion.div
-            className="absolute inset-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: showAurora ? 1 : 0 }}
-            transition={{ duration: 1.2, ease: "easeInOut" }}
-          >
-            {/* Northern lights effect */}
-            <div className="absolute inset-0 overflow-hidden">
-              <motion.div
-                className="absolute inset-0"
-                style={{
-                  background: 'linear-gradient(45deg, rgba(88, 28, 135, 0.15), rgba(37, 99, 235, 0.15), rgba(6, 182, 212, 0.15))',
-                  filter: 'blur(80px)',
-                }}
-                animate={{
-                  scale: [1, 1.2, 1],
-                  opacity: [0.5, 0.8, 0.5],
-                }}
-                transition={{
-                  duration: 8,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-              <motion.div
-                className="absolute inset-0"
-                style={{
-                  background: 'linear-gradient(-45deg, rgba(124, 58, 237, 0.12), rgba(59, 130, 246, 0.12), rgba(14, 165, 233, 0.12))',
-                  filter: 'blur(90px)',
-                }}
-                animate={{
-                  scale: [1.2, 1, 1.2],
-                  opacity: [0.4, 0.7, 0.4],
-                }}
-                transition={{
-                  duration: 10,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-              />
-            </div>
-          </motion.div>
-
-          {/* Background fade */}
-          <motion.div
-            className="absolute inset-0 bg-white"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.85 }}
-            transition={{ duration: 1.5, ease: "easeInOut" }}
-          />
-
-          {/* Enhanced ripple effects */}
-          {ripples.map((ripple) => (
-            <motion.div
-              key={ripple.id}
-              className="absolute"
-              style={{
-                left: ripple.x,
-                top: ripple.y,
-                width: 2,
-                height: 2,
-                background: 'linear-gradient(135deg, #60a5fa, #3b82f6)',
-                borderRadius: '50%',
-                filter: 'blur(2px)',
-              }}
-              initial={{ scale: 1, opacity: 1 }}
-              animate={{
-                scale: [1, Math.random() * 150 + 100],
-                opacity: [1, 0],
-                x: [0, (Math.random() - 0.5) * 1200],
-                y: [0, (Math.random() - 0.5) * 1200],
-              }}
-              transition={{
-                duration: 2.5,
-                ease: "easeOut",
-              }}
-            />
-          ))}
-
-          {/* Enhanced light trails */}
-          <motion.div
-            className="absolute inset-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 0.9 }}
-            transition={{ duration: 1 }}
-          >
-            {Array.from({ length: 30 }).map((_, i) => (
-              <motion.div
-                key={i}
-                className="absolute"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: `${Math.random() * 100}%`,
-                  width: '200px',
-                  height: '2px',
-                  background: 'linear-gradient(90deg, #93c5fd, transparent)',
-                  filter: 'blur(3px)',
-                }}
-                animate={{
-                  x: [0, window.innerWidth],
-                  opacity: [0, 0.9, 0],
-                  scale: [1, Math.random() * 0.5 + 1],
-                }}
-                transition={{
-                  duration: 2.5,
-                  delay: i * 0.08,
-                  ease: "easeInOut",
-                }}
-              />
-            ))}
-          </motion.div>
-
-          {/* Form emergence effect */}
-          <motion.div
-            className="absolute inset-0 bg-gradient-to-tr from-blue-400/10 via-transparent to-cyan-400/10"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ 
-              opacity: showAurora ? 1 : 0,
-              scale: showAurora ? 1 : 0.8,
-            }}
-            transition={{
-              duration: 1.2,
-              ease: "easeOut",
-            }}
-          />
-        </motion.div>
-      )}
-    </AnimatePresence>
+          key={ripple.id}
+          className="absolute rounded-full bg-white"
+          style={{
+            left: ripple.x,
+            top: ripple.y,
+            translateX: '-50%',
+            translateY: '-50%',
+          }}
+          initial={{ width: 0, height: 0, opacity: 0.5 }}
+          animate={{ width: '200vmax', height: '200vmax', opacity: 1 }}
+          transition={{ duration: 1.5, ease: "easeOut" }}
+          onAnimationComplete={onComplete}
+        />
+      ))}
+    </div>
   );
 };
 
 export default function DreamyAwakening() {
-  const [isReady, setIsReady] = useState(false);
   const [showText, setShowText] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
   const [showRippleTransition, setShowRippleTransition] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
-    setIsReady(true);
-    setTimeout(() => {
-      setShowText(true);
-    }, 1500);
+    const timer = setTimeout(() => setShowText(true), 1000);
+    return () => clearTimeout(timer);
   }, []);
 
-  const handleTextComplete = () => {
-    setShowGuide(true);
-  };
+  const handleTextComplete = useCallback(() => {
+    setTimeout(() => setShowGuide(true), 500);
+  }, []);
 
-  const handleTransitionComplete = () => {
-    router.push('/signup'); // Replace with your actual signup route
-  };
+  const handleTransitionComplete = useCallback(() => {
+    router.push('/admin/login');
+  }, [router]);
 
-  const handleClick = () => {
-    setShowRippleTransition(true);
-  };
+  const handleClick = useCallback(() => {
+    if (showGuide) {
+      setShowRippleTransition(true);
+    }
+  }, [showGuide]);
 
   return (
-    <div className="relative min-h-screen overflow-hidden cursor-pointer" onClick={handleClick}>
-      <DreamyBackground isReady={isReady} />
+    <div className="relative w-screen h-screen overflow-hidden cursor-pointer" onClick={handleClick}>
+      <DreamyBackground isReady={showText} />
       <EnhancedSparkles />
       <CursorEffect />
       <DreamyText isReady={showText} onComplete={handleTextComplete} />
-      <GuidingLights isReady={showText} show={showGuide} />
+      <GuidingLights show={showGuide} />
       <RippleTransition isActive={showRippleTransition} onComplete={handleTransitionComplete} />
     </div>
   );
-} 
+}

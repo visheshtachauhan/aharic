@@ -3,7 +3,6 @@ import Image from 'next/image'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Slider } from "@/components/ui/slider"
-import { Switch } from "@/components/ui/switch"
 import { 
   SunMedium, 
   Crop, 
@@ -14,6 +13,9 @@ import {
   LucideIcon
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { createLogger } from '@/lib/logger'
+
+const logger = createLogger('image-enhancer')
 
 interface ImageEnhancerProps {
   imageUrl: string
@@ -48,7 +50,7 @@ export function ImageEnhancer({ imageUrl, onSave, trigger }: ImageEnhancerProps)
   const applyEnhancements = async () => {
     // In a real app, this would use a proper image processing library or API
     // For now, we'll just simulate the changes
-    console.log('Applying enhancements:', enhancements)
+    logger.debug('Applying image enhancements', { enhancements });
   }
 
   const handleAiEnhance = async () => {

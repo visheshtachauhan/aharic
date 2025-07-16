@@ -4,8 +4,9 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { Upload, X, Loader2, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { uploadImage } from "@/lib/supabase";
+import { uploadImage } from "@/lib/supabase/storage";
 import { toast } from "sonner";
+import Image from "next/image";
 
 interface ImageUploadProps {
   value?: string;
@@ -18,27 +19,27 @@ export function ImageUpload({ value, onChange, onError }: ImageUploadProps) {
   const [uploadError, setUploadError] = useState<Error | null>(null);
   const [retryFile, setRetryFile] = useState<File | null>(null);
 
-  const handleUpload = async (file: File) => {
+  const handleUpload = useCallback(async (file: File) => {
       try {
         setIsUploading(true);
-      setUploadError(null);
-      toast.info("Uploading image...");
+        setUploadError(null);
+        toast.info("Uploading image...");
 
         const publicUrl = await uploadImage(file);
         onChange(publicUrl);
         toast.success("Image uploaded successfully");
-      setRetryFile(null);
+        setRetryFile(null);
       } catch (error) {
-      console.error("Error in handleUpload:", error);
+        console.error("Error in handleUpload:", error);
         const errorMessage = error instanceof Error ? error.message : "Failed to upload image";
         toast.error(errorMessage);
-      setUploadError(error as Error);
-      setRetryFile(file);
+        setUploadError(error as Error);
+        setRetryFile(file);
         onError?.(error as Error);
       } finally {
         setIsUploading(false);
       }
-  };
+  }, [onChange, onError]);
 
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
@@ -50,7 +51,7 @@ export function ImageUpload({ value, onChange, onError }: ImageUploadProps) {
 
       await handleUpload(file);
     },
-    [onChange, onError]
+    [handleUpload]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -112,10 +113,11 @@ export function ImageUpload({ value, onChange, onError }: ImageUploadProps) {
           </div>
         ) : value ? (
           <div className="relative aspect-video">
-            <img
+            <Image
               src={value}
               alt="Uploaded"
-              className="w-full h-full object-cover rounded-lg"
+              fill
+              className="object-cover rounded-lg"
             />
             <Button
               type="button"
@@ -149,4 +151,4 @@ export function ImageUpload({ value, onChange, onError }: ImageUploadProps) {
       </div>
     </div>
   );
-} 
+}

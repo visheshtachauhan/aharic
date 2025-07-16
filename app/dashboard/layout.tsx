@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { LayoutDashboard, Menu as MenuIcon, ShoppingBag, TableProperties, Settings, Bell, MessageSquare, ChevronDown, LogOut, FileText, Power } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -25,8 +25,8 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [isRestaurantOnline, setIsRestaurantOnline] = useState(true);
-  const [notifications, setNotifications] = useState(3);
-  const [messages, setMessages] = useState(2);
+  const [notifications] = useState(3);
+  const [messages] = useState(2);
   
   const navItems = [
     {

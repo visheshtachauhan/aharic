@@ -1,18 +1,7 @@
 "use client"
 
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { menuItems } from "@/data/menu-items"
 import { MenuItemCard } from "@/components/menu-item-card"
-
-interface MenuItem {
-  _id: string
-  name: string
-  description: string
-  price: number
-  image: string
-  category: string
-  available: boolean
-}
 
 interface MenuSectionProps {
   title: string
@@ -40,4 +29,4 @@ export function MenuSection({ title, subtitle, category }: MenuSectionProps) {
       </div>
     </section>
   )
-} 
+}

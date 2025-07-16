@@ -1,5 +1,5 @@
 export interface MenuItem {
-  _id: string
+  id: string
   name: string
   description: string
   price: number
@@ -14,7 +14,7 @@ export interface MenuItem {
 }
 
 export interface Category {
-  _id: string
+  id: string
   name: string
   count: number
   isActive?: boolean

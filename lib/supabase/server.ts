@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import type { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 
 export const createClient = () => {
   const cookieStore = cookies()
@@ -12,14 +13,14 @@ export const createClient = () => {
         get(name: string) {
           return cookieStore.get(name)?.value
         },
-        set(name: string, value: string, options: any) {
+        set(name: string, value: string, options: Partial<ResponseCookie>) {
           try {
             cookieStore.set({ name, value, ...options })
           } catch (error) {
             // Handle cookie errors
           }
         },
-        remove(name: string, options: any) {
+        remove(name: string, options: Partial<ResponseCookie>) {
           try {
             cookieStore.set({ name, value: '', ...options })
           } catch (error) {
@@ -29,4 +30,15 @@ export const createClient = () => {
       },
     }
   )
+}
+
+export const getSupabaseSession = async () => {
+  const supabase = createClient()
+  try {
+    const { data: { session } } = await supabase.auth.getSession()
+    return session
+  } catch (error) {
+    console.error('Error getting session:', error)
+    return null
+  }
 } 

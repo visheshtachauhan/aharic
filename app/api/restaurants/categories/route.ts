@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
+import { getCollection } from '@/lib/mongodb';
 
 export async function GET() {
   try {
-    const { db } = await connectToDatabase();
-
+    const restaurantsCollection = await getCollection('restaurants');
+    
     // Get all unique categories from menu items
-    const categories = await db.restaurants.distinct('menuItems.category');
+    const categories = await restaurantsCollection.distinct('menuItems.category');
 
     return NextResponse.json(categories);
   } catch (error) {

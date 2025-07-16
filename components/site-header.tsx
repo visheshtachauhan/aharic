@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { MainNav } from '@/components/main-nav';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -15,4 +14,4 @@ export function SiteHeader() {
       </div>
     </header>
   );
-} 
+}

@@ -1,11 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { Sparkles, Coins, Trophy, ChevronDown, ChevronUp, Gift, CreditCard, ChevronRight } from 'lucide-react';
+import { Trophy, ChevronDown, ChevronUp, Gift, CreditCard, ChevronRight } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+interface Reward {
+  type: 'free_item' | 'discount' | 'cashback';
+  value: string;
+  description: string;
+}
 
 interface RewardsDisplayProps {
   phoneNumber: string;
@@ -18,7 +23,7 @@ interface RewardsDisplayProps {
     description: string;
   };
   onUseCashback?: () => void;
-  onUseReward: (reward: any) => void;
+  onUseReward: (reward: Reward) => void;
   className?: string;
 }
 
@@ -26,18 +31,10 @@ interface CustomerRewards {
   totalOrders: number;
   cashbackBalance: number;
   rewardsTier: number;
-  availableRewards: Array<{
-    type: 'free_item' | 'discount' | 'cashback';
-    value: string;
-    description: string;
-  }>;
+  availableRewards: Reward[];
   nextReward?: {
     ordersRequired: number;
-    reward: {
-      type: 'free_item' | 'discount' | 'cashback';
-      value: string;
-      description: string;
-    };
+    reward: Reward;
   };
 }
 
@@ -55,15 +52,7 @@ export default function RewardsDisplay({
   const [rewards, setRewards] = useState<CustomerRewards | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const progress = nextReward
-    ? ((totalOrders % nextReward.ordersRequired) / nextReward.ordersRequired) * 100
-    : 0;
-
-  useEffect(() => {
-    fetchRewards();
-  }, [phoneNumber]);
-
-  const fetchRewards = async () => {
+  const fetchRewards = useCallback(async () => {
     try {
       const response = await fetch(`/api/restaurant/loyalty/customers?phone=${phoneNumber}`);
       const data = await response.json();
@@ -75,7 +64,11 @@ export default function RewardsDisplay({
     } finally {
       setLoading(false);
     }
-  };
+  }, [phoneNumber]);
+
+  useEffect(() => {
+    fetchRewards();
+  }, [fetchRewards]);
 
   if (loading) {
     return (
@@ -128,7 +121,7 @@ export default function RewardsDisplay({
               {/* First Order Discount */}
               {firstOrderDiscount && firstOrderDiscount > 0 && (
                 <div className="flex items-center gap-3 p-3 bg-orange-50 text-orange-800 rounded-lg">
-                  <Sparkles className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                  <Gift className="w-5 h-5 text-orange-500 flex-shrink-0" />
                   <div>
                     <p className="font-medium">First Order Discount</p>
                     <p className="text-sm">Get ₹{firstOrderDiscount} off on your first order!</p>

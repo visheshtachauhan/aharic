@@ -3,6 +3,17 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { CATEGORIES, CATEGORY_IMAGES, DEFAULT_IMAGE, CATEGORY_SETTINGS, type Category } from '@/app/admin/menu/constants';
 
+interface Variant {
+  size: string;
+  price: number;
+}
+
+interface Addon {
+  id: string;
+  name: string;
+  price: number;
+}
+
 export async function GET() {
   let db;
   try {
@@ -16,7 +27,7 @@ export async function GET() {
       success: true, 
       items: items || [] 
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error fetching menu items:', error);
     return NextResponse.json({ 
       success: false, 
@@ -60,7 +71,7 @@ export async function POST(request: Request) {
       // Handle variants
       hasVariants: categorySettings.hasVariants,
       variants: categorySettings.hasVariants 
-        ? (body.variants || categorySettings.defaultVariants || []).map((variant: any) => ({
+        ? (body.variants || categorySettings.defaultVariants || []).map((variant: Variant) => ({
             size: variant.size,
             price: Math.max(0, parseFloat(variant.price?.toString() || '0') || 0)
           }))
@@ -72,7 +83,7 @@ export async function POST(request: Request) {
       // Handle add-ons
       allowCustomizations: categorySettings.allowCustomizations,
       availableAddOns: categorySettings.allowCustomizations
-        ? (body.availableAddOns || categorySettings.availableAddOns || []).map((addon: any) => ({
+        ? (body.availableAddOns || categorySettings.availableAddOns || []).map((addon: Addon) => ({
             id: addon.id,
             name: addon.name,
             price: Math.max(0, parseFloat(addon.price?.toString() || '0') || 0)
@@ -88,7 +99,7 @@ export async function POST(request: Request) {
       message: 'Menu item created successfully',
       itemId: result.insertedId
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error creating menu item:', error);
     return NextResponse.json({ 
       success: false, 
@@ -152,7 +163,7 @@ export async function PUT(request: Request) {
       // Handle variants
       hasVariants: categorySettings.hasVariants,
       variants: categorySettings.hasVariants 
-        ? (updateData.variants || existingItem.variants || categorySettings.defaultVariants || []).map((variant: any) => ({
+        ? (updateData.variants || existingItem.variants || categorySettings.defaultVariants || []).map((variant: Variant) => ({
             size: variant.size,
             price: Math.max(0, parseFloat(variant.price?.toString() || '0') || 0)
           }))
@@ -164,7 +175,7 @@ export async function PUT(request: Request) {
       // Handle add-ons
       allowCustomizations: categorySettings.allowCustomizations,
       availableAddOns: categorySettings.allowCustomizations
-        ? (updateData.availableAddOns || existingItem.availableAddOns || categorySettings.availableAddOns || []).map((addon: any) => ({
+        ? (updateData.availableAddOns || existingItem.availableAddOns || categorySettings.availableAddOns || []).map((addon: Addon) => ({
             id: addon.id,
             name: addon.name,
             price: Math.max(0, parseFloat(addon.price?.toString() || '0') || 0)
@@ -188,7 +199,7 @@ export async function PUT(request: Request) {
       success: true,
       message: 'Menu item updated successfully'
     });
-  } catch (error) {
+  } catch (error: unknown) {
     console.error('Error updating menu item:', error);
     return NextResponse.json({ 
       success: false, 

@@ -2,25 +2,19 @@ import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 
-// In-memory storage for restaurants
-const restaurants = new Map<string, any>();
+interface Restaurant {
+  _id: string;
+  name: string;
+  description: string;
+  address: string;
+  phone: string;
+  email: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-// Initialize with a sample restaurant if none exists
-const initializeRestaurants = () => {
-  if (restaurants.size === 0) {
-    const sampleRestaurant = {
-      _id: '1',
-      name: 'Sample Restaurant',
-      description: 'A great place to dine',
-      address: '123 Main St',
-      phone: '555-0123',
-      email: 'contact@samplerestaurant.com',
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    restaurants.set('1', sampleRestaurant);
-  }
-};
+// In-memory storage for restaurants
+const restaurants = new Map<string, Restaurant>();
 
 // GET /api/restaurants/[id]
 export async function GET(

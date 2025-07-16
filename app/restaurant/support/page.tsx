@@ -91,7 +91,8 @@ export default function RestaurantSupportPage() {
         });
         dialogTrigger.dispatchEvent(closeEvent);
       }
-    } catch (error: any) {
+    } catch (e: unknown) {
+      const error = e as Error;
       console.error('Support request error:', error);
       toast.error(error.message || "Failed to submit support request. Please try again.");
     } finally {
@@ -256,4 +257,4 @@ export default function RestaurantSupportPage() {
       </Card>
     </div>
   );
-} 
+}

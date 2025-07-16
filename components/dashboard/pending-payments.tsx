@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar } from "@/components/ui/avatar";
 import { RupeeIcon } from "@/components/icons/rupee-icon";
+import { createLogger } from '@/lib/logger';
 
 interface PendingPayment {
   id: string;
@@ -34,6 +36,8 @@ interface PendingPayment {
   paymentType: "table" | "online" | "takeaway";
   daysPending: number;
 }
+
+const logger = createLogger('pending-payments');
 
 export function PendingPayments() {
   const [payments, setPayments] = useState<PendingPayment[]>([
@@ -125,7 +129,7 @@ export function PendingPayments() {
   };
   
   const handleSendReminder = (id: string) => {
-    console.log("Sending reminder for payment: ", id);
+    logger.info('Sending payment reminder', { paymentId: id });
     // Implement reminder logic here
   };
   
@@ -204,18 +208,24 @@ export function PendingPayments() {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-10 w-10">
                       {payment.customerAvatar ? (
-                        <img 
+                        <Image 
                           src={payment.customerAvatar} 
                           alt={payment.customerName}
+                          width={40}
+                          height={40}
+                          className="rounded-full"
                           onError={(e) => {
                             const target = e.target as HTMLImageElement;
-                            target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(payment.customerName)}&background=random`;
+                            target.srcset = `https://ui-avatars.com/api/?name=${encodeURIComponent(payment.customerName)}&background=random`;
                           }}
                         />
                       ) : (
-                        <img 
+                        <Image 
                           src={`https://ui-avatars.com/api/?name=${encodeURIComponent(payment.customerName)}&background=random`}
                           alt={payment.customerName}
+                          width={40}
+                          height={40}
+                          className="rounded-full"
                         />
                       )}
                     </Avatar>

@@ -3,21 +3,8 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
-interface CursorPosition {
-  x: number;
-  y: number;
-}
-
-interface RippleEffect {
-  id: number;
-  x: number;
-  y: number;
-  size: number;
-}
-
 export function CursorEffect() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
-  const [ripples, setRipples] = useState<RippleEffect[]>([]);
   const [isHovering, setIsHovering] = useState(false);
 
   useEffect(() => {
@@ -31,28 +18,10 @@ export function CursorEffect() {
       setIsHovering(Boolean(isInteractive));
     };
 
-    const handleClick = (e: MouseEvent) => {
-      const newRipple = {
-        id: Date.now(),
-        x: e.clientX,
-        y: e.clientY,
-        size: 0
-      };
-
-      setRipples(prev => [...prev, newRipple]);
-
-      // Remove ripple after animation
-      setTimeout(() => {
-        setRipples(prev => prev.filter(r => r.id !== newRipple.id));
-      }, 1000);
-    };
-
     window.addEventListener('mousemove', updateMousePosition);
-    window.addEventListener('click', handleClick);
 
     return () => {
       window.removeEventListener('mousemove', updateMousePosition);
-      window.removeEventListener('click', handleClick);
     };
   }, []);
 

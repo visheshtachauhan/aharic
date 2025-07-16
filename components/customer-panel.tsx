@@ -5,19 +5,27 @@ import { RestaurantHeader } from "@/components/restaurant-header"
 import { MenuCategories } from "@/components/menu-categories"
 import { MenuItems } from "@/components/menu-items"
 import { FloatingCart } from "@/components/floating-cart"
-import { OrderTracker } from "@/components/order-tracker"
-import { restaurantData, menuItems } from "@/data/restaurant-data"
 import { motion } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { OrderBell } from "@/components/animations/order-bell"
 import { useSoundSettings } from "@/contexts/SoundContext"
+import { MenuItem } from '@/types/menu'
+import { CartItem } from '@/types/cart'
 
-export function CustomerPanel() {
+interface CustomerPanelProps {
+  restaurantData: {
+    name: string
+    description: string
+    image: string
+  }
+  menuItems: MenuItem[]
+}
+
+export function CustomerPanel({ restaurantData, menuItems }: CustomerPanelProps) {
   const [selectedCategory, setSelectedCategory] = useState("all")
-  const [cartItems, setCartItems] = useState<any[]>([])
+  const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [showOrderTracker, setShowOrderTracker] = useState(false)
   const [orderStatus, setOrderStatus] = useState<"pending" | "preparing" | "ready" | "delivered" | "cancelled">("pending")
-  const [orderId, setOrderId] = useState<string | null>(null)
   const [playBell, setPlayBell] = useState(false)
   const { isMuted } = useSoundSettings()
   const [estimatedTime, setEstimatedTime] = useState(15) // minutes
@@ -26,12 +34,11 @@ export function CustomerPanel() {
     selectedCategory === "all"
       ? menuItems
       : menuItems.filter(
-          (item) => item.category === selectedCategory || (selectedCategory === "bestseller" && item.isBestSeller),
+          (item) => item.category === selectedCategory || (selectedCategory === "popular" && item.popular),
         )
 
-  const addToCart = (item: any) => {
+  const addToCart = (item: MenuItem) => {
     const existingItem = cartItems.find((cartItem) => cartItem.id === item.id)
-
     if (existingItem) {
       setCartItems(
         cartItems.map((cartItem) =>
@@ -39,13 +46,21 @@ export function CustomerPanel() {
         ),
       )
     } else {
-      setCartItems([...cartItems, { ...item, quantity: 1 }])
+      setCartItems([
+        ...cartItems,
+        {
+          id: item.id,
+          name: item.name,
+          price: item.price,
+          image: item.image,
+          quantity: 1
+        }
+      ])
     }
   }
 
   const removeFromCart = (itemId: string) => {
     const existingItem = cartItems.find((item) => item.id === itemId)
-
     if (existingItem && existingItem.quantity > 1) {
       setCartItems(cartItems.map((item) => (item.id === itemId ? { ...item, quantity: item.quantity - 1 } : item)))
     } else {
@@ -91,7 +106,7 @@ export function CustomerPanel() {
   const placeOrder = async () => {
     try {
       const newOrderId = 'order-' + Math.random().toString(36).substring(2, 15);
-      setOrderId(newOrderId);
+
       setShowOrderTracker(true);
       setOrderStatus("pending");
       if (!isMuted) setPlayBell(true);

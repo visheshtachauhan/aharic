@@ -1,16 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useParams } from 'next/navigation';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import QRGenerator from '@/components/qr-generator';
-import { Plus, Table as TableIcon, QrCode, Settings, Trash2, Grid, List, Search, Filter, Eye, EyeOff } from 'lucide-react';
-import { useToast } from '@/components/ui/use-toast';
-import { useParams } from 'next/navigation';
-import { Badge } from '@/components/ui/badge';
+import { Plus, Table as TableIcon, QrCode, Trash2, Grid, List, Search } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -29,24 +27,16 @@ interface Table {
   lastUpdated?: Date;
 }
 
-interface Restaurant {
-  _id: string;
-  name: string;
-}
-
 export default function TablesPage() {
   const params = useParams();
   const [tables, setTables] = useState<Table[]>([]);
   const [filteredTables, setFilteredTables] = useState<Table[]>([]);
-  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
   const [showQRGenerator, setShowQRGenerator] = useState(false);
   const [showAddTable, setShowAddTable] = useState(false);
-  const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const { toast } = useToast();
 
   const [newTable, setNewTable] = useState({
     number: '',
@@ -59,19 +49,37 @@ export default function TablesPage() {
     notes: '',
   });
 
-  const [showQRCode, setShowQRCode] = useState<{ [key: string]: boolean }>({});
   const [activeQRCode, setActiveQRCode] = useState<string | null>(null);
+
+  const fetchTables = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/restaurants/${params.id}/tables`);
+      if (!response.ok) throw new Error('Failed to fetch tables');
+      const data = await response.json();
+      setTables(data);
+    } catch (error) {
+      toast.error('Failed to fetch tables');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [params.id]);
+
+  const fetchRestaurant = useCallback(async () => {
+    try {
+      const response = await fetch(`/api/restaurants/${params.id}`);
+      if (!response.ok) throw new Error('Failed to fetch restaurant');
+      await response.json();
+    } catch (error) {
+      toast.error('Failed to fetch restaurant details');
+    }
+  }, [params.id]);
 
   useEffect(() => {
     fetchTables();
     fetchRestaurant();
-  }, []);
+  }, [fetchTables, fetchRestaurant]);
 
-  useEffect(() => {
-    filterTables();
-  }, [tables, searchQuery, statusFilter]);
-
-  const filterTables = () => {
+  const filterTables = useCallback(() => {
     let filtered = [...tables];
 
     // Apply search filter
@@ -97,38 +105,17 @@ export default function TablesPage() {
     });
 
     setFilteredTables(filtered);
-  };
+  }, [tables, searchQuery, statusFilter]);
 
-  const fetchTables = async () => {
-    try {
-      const response = await fetch(`/api/restaurants/${params.id}/tables`);
-      if (!response.ok) throw new Error('Failed to fetch tables');
-      const data = await response.json();
-      setTables(data);
-    } catch (error) {
-      console.error('Error fetching tables:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to fetch tables',
-        variant: 'destructive',
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const fetchRestaurant = async () => {
-    try {
-      const response = await fetch(`/api/restaurants/${params.id}`);
-      if (!response.ok) throw new Error('Failed to fetch restaurant');
-      const data = await response.json();
-      setRestaurant(data);
-    } catch (error) {
-      console.error('Error fetching restaurant:', error);
-    }
-  };
+  useEffect(() => {
+    filterTables();
+  }, [filterTables]);
 
   const handleAddTable = async () => {
+    if (!newTable.number.trim()) {
+      toast.error('Table name cannot be empty');
+      return;
+    }
     try {
       const response = await fetch(`/api/restaurants/${params.id}/tables`, {
         method: 'POST',
@@ -138,10 +125,7 @@ export default function TablesPage() {
 
       if (!response.ok) throw new Error('Failed to create table');
 
-      toast({
-        title: 'Success',
-        description: 'Table created successfully',
-      });
+      toast.success('Table created successfully');
 
       setShowAddTable(false);
       setNewTable({
@@ -156,12 +140,7 @@ export default function TablesPage() {
       });
       fetchTables();
     } catch (error) {
-      console.error('Error creating table:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to create table',
-        variant: 'destructive',
-      });
+      toast.error('Failed to create table');
     }
   };
 
@@ -175,19 +154,11 @@ export default function TablesPage() {
 
       if (!response.ok) throw new Error('Failed to update table');
 
-      toast({
-        title: 'Success',
-        description: 'Table status updated successfully',
-      });
+      toast.success('Table status updated successfully');
 
       fetchTables();
     } catch (error) {
-      console.error('Error updating table:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to update table status',
-        variant: 'destructive',
-      });
+      toast.error('Failed to update table status');
     }
   };
 
@@ -200,19 +171,11 @@ export default function TablesPage() {
 
       if (!response.ok) throw new Error('Failed to delete table');
 
-      toast({
-        title: 'Success',
-        description: 'Table deleted successfully',
-      });
+      toast.success('Table deleted successfully');
 
       fetchTables();
     } catch (error) {
-      console.error('Error deleting table:', error);
-      toast({
-        title: 'Error',
-        description: 'Failed to delete table',
-        variant: 'destructive',
-      });
+      toast.error('Failed to delete table');
     }
   };
 
@@ -228,21 +191,6 @@ export default function TablesPage() {
         return 'bg-slate-500 text-white';
       default:
         return 'bg-slate-500 text-white';
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'available':
-        return '';
-      case 'occupied':
-        return '';
-      case 'reserved':
-        return '';
-      case 'maintenance':
-        return '';
-      default:
-        return '';
     }
   };
 

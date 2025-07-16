@@ -19,20 +19,52 @@ interface CheckoutProps {
   onCheckoutComplete: () => void;
 }
 
-export default function Checkout({ items, onCheckoutComplete }: CheckoutProps) {
+interface Reward {
+  type: 'free_item' | 'discount' | 'cashback';
+  value: string;
+  description: string;
+}
+
+interface PaymentMethod {
+  id: string;
+  type: 'card' | 'upi';
+  last4: string;
+  brand: string;
+}
+
+export default function Checkout({ items = [], onCheckoutComplete }: CheckoutProps) {
   const [phoneNumber, setPhoneNumber] = useState<string | null>(null);
   const [showPhoneVerification, setShowPhoneVerification] = useState(false);
-  const [loyaltySettings, setLoyaltySettings] = useState<any>(null);
+  const [loyaltySettings, setLoyaltySettings] = useState<{
+    firstOrderDiscount: {
+      enabled: boolean;
+      amount: number;
+    };
+    oneClickCheckout: {
+      enabled: boolean;
+    };
+  } | null>(null);
   const [appliedCashback, setAppliedCashback] = useState(0);
-  const [appliedReward, setAppliedReward] = useState<any>(null);
+  const [appliedReward, setAppliedReward] = useState<Reward | null>(null);
   const { addNotification } = useNotifications();
-
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const total = Math.max(0, subtotal - appliedCashback - (appliedReward?.value || 0));
 
   useEffect(() => {
     fetchLoyaltySettings();
   }, []);
+
+  if (!items || !Array.isArray(items)) {
+    return (
+      <div className="container mx-auto px-4 py-8">
+        <Card className="p-6">
+          <h2 className="text-2xl font-bold mb-4">No Items in Cart</h2>
+          <p>Please add items to your cart before proceeding to checkout.</p>
+        </Card>
+      </div>
+    );
+  }
+
+  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const total = Math.max(0, subtotal - appliedCashback - (Number(appliedReward?.value) || 0));
 
   const fetchLoyaltySettings = async () => {
     try {
@@ -85,7 +117,7 @@ export default function Checkout({ items, onCheckoutComplete }: CheckoutProps) {
     });
   };
 
-  const handleUseReward = (reward: any) => {
+  const handleUseReward = (reward: Reward) => {
     setAppliedReward(reward);
     addNotification({
       title: 'Reward Applied',
@@ -94,7 +126,7 @@ export default function Checkout({ items, onCheckoutComplete }: CheckoutProps) {
     });
   };
 
-  const handleQuickCheckout = async (paymentMethod: any) => {
+  const handleQuickCheckout = async (paymentMethod: PaymentMethod) => {
     try {
       // Process payment using saved payment method
       // Update order with loyalty information
@@ -187,6 +219,8 @@ export default function Checkout({ items, onCheckoutComplete }: CheckoutProps) {
             {/* Rewards Display */}
             <RewardsDisplay
               phoneNumber={phoneNumber}
+              cashbackBalance={0}
+              totalOrders={0}
               onUseCashback={handleUseCashback}
               onUseReward={handleUseReward}
             />
@@ -195,7 +229,6 @@ export default function Checkout({ items, onCheckoutComplete }: CheckoutProps) {
             {loyaltySettings?.oneClickCheckout?.enabled && (
               <OneClickCheckout
                 phoneNumber={phoneNumber}
-                totalAmount={total}
                 onCheckout={handleQuickCheckout}
               />
             )}
@@ -223,4 +256,4 @@ export default function Checkout({ items, onCheckoutComplete }: CheckoutProps) {
       />
     </div>
   );
-} 
+}

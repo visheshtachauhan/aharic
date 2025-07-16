@@ -1,14 +1,12 @@
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Settings, Plus, Trash, Save, Clock, Image as ImageIcon } from "lucide-react"
-import { Badge } from "@/components/ui/badge"
+import { Settings, Plus, Clock, Image as ImageIcon } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
-import { ImageEnhancer } from "./image-enhancer"
-import type { MenuItem, VariantManagerProps, Variant, Addon, Availability } from "@/types/restaurant"
+import type { VariantManagerProps, Variant, Addon, Availability } from "@/types/restaurant"
 import { Label } from "@/components/ui/label"
 import { ImagePlus } from "lucide-react"
 
@@ -26,7 +24,7 @@ export function VariantManager({ item, onUpdate }: VariantManagerProps) {
       }
     }
   )
-  const [image, setImage] = useState(item.image)
+  const [image] = useState(item.image)
 
   const handleSave = () => {
     onUpdate({
@@ -64,7 +62,7 @@ export function VariantManager({ item, onUpdate }: VariantManagerProps) {
     ))
   }
 
-  const renderVariantForm = (items: (Variant | Addon)[], onChange: (index: number, field: keyof (Variant | Addon), value: any) => void) => (
+  const renderVariantForm = (items: (Variant | Addon)[], onChange: (index: number, field: keyof (Variant | Addon), value: string | number | boolean) => void) => (
     <div className="space-y-4 mt-4">
       {items.map((item, index) => (
         <div key={index} className="flex items-center gap-4">
@@ -235,4 +233,4 @@ export function VariantManager({ item, onUpdate }: VariantManagerProps) {
       </Dialog>
     </>
   )
-} 
+}

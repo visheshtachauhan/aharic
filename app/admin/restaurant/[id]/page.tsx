@@ -8,9 +8,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { ImageUpload } from "@/components/image-upload";
+import { ImageUpload } from "@/components/ui/image-upload";
 import { useParams } from "next/navigation";
-import { Restaurant } from "@/models/Restaurant";
 
 interface MenuItem {
   id: string;
@@ -25,28 +24,45 @@ interface MenuItem {
   isRecommended?: boolean;
 }
 
-interface Table {
-  id: string;
-  number: string;
-  capacity: number;
-  status: 'available' | 'occupied' | 'reserved';
+interface MockRestaurant {
+    id: string;
+    name: string;
+    description: string;
+    address: string;
+    phone: string;
+    email: string;
+    coverImage: string;
+    logo: string;
+    openingHours: {
+        [key: string]: { open: string; close: string };
+    };
+    deliverySettings: {
+        isDeliveryAvailable: boolean;
+        minimumOrder: number;
+        deliveryFee: number;
+        deliveryRadius: number;
+    };
+    socialMedia: {
+        facebook: string;
+        instagram: string;
+        twitter: string;
+    };
 }
 
 export default function RestaurantManagement() {
-  const params = useParams();
-  const [activeTab, setActiveTab] = useState("basic-info");
-  const [restaurant, setRestaurant] = useState<Restaurant | null>(null);
+  const params = useParams() || {};
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
-  const [tables, setTables] = useState<Table[]>([]);
 
   // Mock data for development
-  const mockRestaurant = {
+  const mockRestaurant: MockRestaurant = {
     id: params.id as string,
     name: "Spice Garden",
     description: "Authentic Indian cuisine in a modern setting",
     address: "123 Main Street, City",
     phone: "+1 234 567 8900",
     email: "contact@spicegarden.com",
+    coverImage: "https://placehold.co/600x400/png",
+    logo: "https://placehold.co/400x400/png",
     openingHours: {
       monday: { open: "11:00", close: "22:00" },
       tuesday: { open: "11:00", close: "22:00" },
@@ -69,19 +85,19 @@ export default function RestaurantManagement() {
     }
   };
 
+  const [coverImage, setCoverImage] = useState(mockRestaurant.coverImage || "");
+  const [logo, setLogo] = useState(mockRestaurant.logo || "");
+
   const handleSaveBasicInfo = () => {
     // TODO: Implement save functionality
-    console.log("Saving basic info...");
   };
 
   const handleSaveMenu = () => {
     // TODO: Implement save functionality
-    console.log("Saving menu...");
   };
 
   const handleSaveTables = () => {
     // TODO: Implement save functionality
-    console.log("Saving tables...");
   };
 
   return (
@@ -126,19 +142,15 @@ export default function RestaurantManagement() {
                 <div>
                   <Label>Cover Image</Label>
                   <ImageUpload
-                    value=""
-                    onChange={() => {}}
-                    onRemove={() => {}}
-                    disabled={false}
+                    value={coverImage}
+                    onChange={setCoverImage}
                   />
                 </div>
                 <div>
                   <Label>Logo</Label>
                   <ImageUpload
-                    value=""
-                    onChange={() => {}}
-                    onRemove={() => {}}
-                    disabled={false}
+                    value={logo}
+                    onChange={setLogo}
                   />
                 </div>
               </div>
@@ -164,9 +176,12 @@ export default function RestaurantManagement() {
                     <div className="relative h-40 mb-4">
                       <ImageUpload
                         value={item.image}
-                        onChange={() => {}}
-                        onRemove={() => {}}
-                        disabled={false}
+                        onChange={(newUrl) => {
+                          const newMenuItems = menuItems.map(mi => 
+                            mi.id === item.id ? { ...mi, image: newUrl } : mi
+                          );
+                          setMenuItems(newMenuItems);
+                        }}
                       />
                     </div>
                     <div className="space-y-2">
@@ -206,19 +221,7 @@ export default function RestaurantManagement() {
               <Button>Add New Table</Button>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {tables.map((table) => (
-                <Card key={table.id} className="p-4">
-                  <div className="space-y-4">
-                    <Input placeholder="Table Number" defaultValue={table.number} />
-                    <Input type="number" placeholder="Capacity" defaultValue={table.capacity} />
-                    <select className="w-full p-2 border rounded">
-                      <option value="available">Available</option>
-                      <option value="occupied">Occupied</option>
-                      <option value="reserved">Reserved</option>
-                    </select>
-                  </div>
-                </Card>
-              ))}
+              {/* You can map over real table data here */}
             </div>
             <Button onClick={handleSaveTables} className="mt-6">
               Save Table Changes
@@ -251,49 +254,29 @@ export default function RestaurantManagement() {
                 <h3 className="text-lg font-medium mb-4">Delivery Settings</h3>
                 <div className="space-y-4">
                   <div className="flex items-center space-x-2">
-                    <Switch id="delivery-available" />
-                    <Label htmlFor="delivery-available">Enable Delivery</Label>
+                    <Switch id="delivery-available" defaultChecked={mockRestaurant.deliverySettings.isDeliveryAvailable} />
+                    <Label htmlFor="delivery-available">Delivery Available</Label>
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label>Minimum Order</Label>
-                      <Input type="number" defaultValue={mockRestaurant.deliverySettings.minimumOrder} />
+                      <Label htmlFor="min-order">Minimum Order</Label>
+                      <Input id="min-order" type="number" defaultValue={mockRestaurant.deliverySettings.minimumOrder} />
                     </div>
                     <div>
-                      <Label>Delivery Fee</Label>
-                      <Input type="number" defaultValue={mockRestaurant.deliverySettings.deliveryFee} />
+                      <Label htmlFor="delivery-fee">Delivery Fee</Label>
+                      <Input id="delivery-fee" type="number" defaultValue={mockRestaurant.deliverySettings.deliveryFee} />
                     </div>
                     <div>
-                      <Label>Delivery Radius (km)</Label>
-                      <Input type="number" defaultValue={mockRestaurant.deliverySettings.deliveryRadius} />
+                      <Label htmlFor="delivery-radius">Delivery Radius (km)</Label>
+                      <Input id="delivery-radius" type="number" defaultValue={mockRestaurant.deliverySettings.deliveryRadius} />
                     </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* Social Media */}
-              <div>
-                <h3 className="text-lg font-medium mb-4">Social Media Links</h3>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Facebook</Label>
-                    <Input defaultValue={mockRestaurant.socialMedia.facebook} />
-                  </div>
-                  <div>
-                    <Label>Instagram</Label>
-                    <Input defaultValue={mockRestaurant.socialMedia.instagram} />
-                  </div>
-                  <div>
-                    <Label>Twitter</Label>
-                    <Input defaultValue={mockRestaurant.socialMedia.twitter} />
                   </div>
                 </div>
               </div>
             </div>
-            <Button className="mt-6">Save Settings</Button>
           </Card>
         </TabsContent>
       </Tabs>
     </div>
   );
-} 
+}

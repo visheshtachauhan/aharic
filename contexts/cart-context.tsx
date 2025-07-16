@@ -1,6 +1,7 @@
 "use client"
 
-import React, { createContext, useContext, useReducer, useEffect } from "react"
+import React, { createContext, useContext, useReducer, useEffect, useState } from "react"
+import { toast } from "sonner"
 
 interface CartItem {
   id: string
@@ -20,20 +21,24 @@ type CartAction =
   | { type: "REMOVE_ITEM"; payload: string }
   | { type: "UPDATE_QUANTITY"; payload: { id: string; quantity: number } }
   | { type: "CLEAR_CART" }
+  | { type: "SET_CART"; payload: CartState }
 
 const initialState: CartState = {
   items: [],
   total: 0,
 }
 
-const CartContext = createContext<{
+interface CartContextType {
   state: CartState
   dispatch: React.Dispatch<CartAction>
   addItem: (item: Omit<CartItem, "quantity">) => void
   removeItem: (id: string) => void
   updateQuantity: (id: string, quantity: number) => void
   clearCart: () => void
-} | null>(null)
+  isLoading: boolean
+}
+
+const CartContext = createContext<CartContextType | null>(null)
 
 function cartReducer(state: CartState, action: CartAction): CartState {
   switch (action.type) {
@@ -72,6 +77,10 @@ function cartReducer(state: CartState, action: CartAction): CartState {
       const item = state.items.find((item) => item.id === action.payload.id)
       if (!item) return state
 
+      if (action.payload.quantity < 1) {
+        return state
+      }
+
       const quantityDiff = action.payload.quantity - item.quantity
 
       return {
@@ -86,6 +95,8 @@ function cartReducer(state: CartState, action: CartAction): CartState {
     }
     case "CLEAR_CART":
       return initialState
+    case "SET_CART":
+      return action.payload
     default:
       return state
   }
@@ -93,53 +104,86 @@ function cartReducer(state: CartState, action: CartAction): CartState {
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(cartReducer, initialState)
+  const [isLoading, setIsLoading] = useState(true)
 
   // Load cart from localStorage on mount
   useEffect(() => {
-    const savedCart = localStorage.getItem("cart")
-    if (savedCart) {
-      const { items, total } = JSON.parse(savedCart)
-      dispatch({ type: "CLEAR_CART" })
-      items.forEach((item: CartItem) => {
-        for (let i = 0; i < item.quantity; i++) {
-          dispatch({
-            type: "ADD_ITEM",
-            payload: {
-              id: item.id,
-              name: item.name,
-              price: item.price,
-              image: item.image,
-            },
-          })
+    const loadCart = () => {
+      try {
+        const savedCart = localStorage.getItem("cart")
+        if (savedCart) {
+          const { items, total } = JSON.parse(savedCart)
+          dispatch({ type: "SET_CART", payload: { items, total } })
         }
-      })
+      } catch (error) {
+        toast.error("Failed to load cart from storage. Starting with an empty cart.")
+      } finally {
+        setIsLoading(false)
+      }
     }
+
+    loadCart()
   }, [])
 
   // Save cart to localStorage on change
   useEffect(() => {
-    localStorage.setItem("cart", JSON.stringify(state))
+    try {
+      localStorage.setItem("cart", JSON.stringify(state))
+    } catch (error) {
+      toast.error("Failed to save cart to storage. Your changes may not persist.")
+    }
   }, [state])
 
   const addItem = (item: Omit<CartItem, "quantity">) => {
-    dispatch({ type: "ADD_ITEM", payload: item })
+    try {
+      dispatch({ type: "ADD_ITEM", payload: item })
+      toast.success(`${item.name} added to cart!`)
+    } catch (error) {
+      toast.error("Failed to add item to cart. Please try again.")
+    }
   }
 
   const removeItem = (id: string) => {
-    dispatch({ type: "REMOVE_ITEM", payload: id })
+    try {
+      const item = state.items.find((item) => item.id === id)
+      if (!item) return
+
+      dispatch({ type: "REMOVE_ITEM", payload: id })
+      toast.info(`${item.name} removed from cart.`)
+    } catch (error) {
+      toast.error("Failed to remove item from cart. Please try again.")
+    }
   }
 
   const updateQuantity = (id: string, quantity: number) => {
-    dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } })
+    try {
+      if (quantity < 1) {
+        toast.error("Quantity must be at least 1.")
+        return
+      }
+
+      const item = state.items.find((item) => item.id === id)
+      if (!item) return
+
+      dispatch({ type: "UPDATE_QUANTITY", payload: { id, quantity } })
+      toast.success(`Updated ${item.name} quantity to ${quantity}.`)
+    } catch (error) {
+      toast.error("Failed to update item quantity. Please try again.")
+    }
   }
 
   const clearCart = () => {
-    dispatch({ type: "CLEAR_CART" })
+    try {
+      dispatch({ type: "CLEAR_CART" })
+      toast.info("Cart cleared.")
+    } catch (error) {
+      toast.error("Failed to clear cart. Please try again.")
+    }
   }
 
   return (
     <CartContext.Provider
-      value={{ state, dispatch, addItem, removeItem, updateQuantity, clearCart }}
+      value={{ state, dispatch, addItem, removeItem, updateQuantity, clearCart, isLoading }}
     >
       {children}
     </CartContext.Provider>

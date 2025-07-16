@@ -15,7 +15,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 2, 
         price: 450,
         category: 'Main Course',
-        description: 'Creamy butter chicken curry'
+        description: 'Creamy butter chicken curry',
+        isAvailable: true
       },
       { 
         id: '2', 
@@ -23,7 +24,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 4, 
         price: 40,
         category: 'Breads',
-        description: 'Traditional Indian bread'
+        description: 'Traditional Indian bread',
+        isAvailable: true
       }
     ],
     amount: 1060,
@@ -43,7 +45,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 1, 
         price: 350,
         category: 'Starters',
-        description: 'Grilled cottage cheese with spices'
+        description: 'Grilled cottage cheese with spices',
+        isAvailable: true
       },
       { 
         id: '4', 
@@ -51,7 +54,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 2, 
         price: 50,
         category: 'Breads',
-        description: 'Naan bread with garlic'
+        description: 'Naan bread with garlic',
+        isAvailable: true
       }
     ],
     amount: 450,
@@ -71,7 +75,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 2, 
         price: 400,
         category: 'Rice',
-        description: 'Fragrant rice with chicken and spices'
+        description: 'Fragrant rice with chicken and spices',
+        isAvailable: true
       },
       { 
         id: '6', 
@@ -79,7 +84,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 1, 
         price: 50,
         category: 'Accompaniments',
-        description: 'Yogurt with mild spices'
+        description: 'Yogurt with mild spices',
+        isAvailable: true
       }
     ],
     amount: 850,
@@ -100,7 +106,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 1, 
         price: 250,
         category: 'Main Course',
-        description: 'Creamy black lentils'
+        description: 'Creamy black lentils',
+        isAvailable: true
       },
       { 
         id: '8', 
@@ -108,7 +115,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 3, 
         price: 45,
         category: 'Breads',
-        description: 'Buttered naan bread'
+        description: 'Buttered naan bread',
+        isAvailable: true
       }
     ],
     amount: 385,
@@ -128,7 +136,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 1, 
         price: 300,
         category: 'Main Course',
-        description: 'Cottage cheese dumplings in creamy sauce'
+        description: 'Cottage cheese dumplings in creamy sauce',
+        isAvailable: true
       },
       { 
         id: '10', 
@@ -136,7 +145,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 1, 
         price: 150,
         category: 'Rice',
-        description: 'Cumin flavored rice'
+        description: 'Cumin flavored rice',
+        isAvailable: true
       }
     ],
     amount: 450,
@@ -155,7 +165,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 1, 
         price: 450,
         category: 'Starters',
-        description: 'Clay oven roasted chicken'
+        description: 'Clay oven roasted chicken',
+        isAvailable: true
       },
       { 
         id: '12', 
@@ -163,7 +174,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 1, 
         price: 30,
         category: 'Accompaniments',
-        description: 'Fresh mint sauce'
+        description: 'Fresh mint sauce',
+        isAvailable: true
       }
     ],
     amount: 480,
@@ -185,7 +197,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 1, 
         price: 280,
         category: 'Main Course',
-        description: 'Cottage cheese in spinach gravy'
+        description: 'Cottage cheese in spinach gravy',
+        isAvailable: true
       },
       { 
         id: '14', 
@@ -193,7 +206,8 @@ const INITIAL_ORDERS: Order[] = [
         quantity: 4, 
         price: 20,
         category: 'Breads',
-        description: 'Whole wheat bread'
+        description: 'Whole wheat bread',
+        isAvailable: true
       }
     ],
     amount: 360,
@@ -208,19 +222,21 @@ const INITIAL_ORDERS: Order[] = [
     items: [
       { 
         id: '15', 
-        name: 'Chilli Chicken', 
-        quantity: 1, 
-        price: 350,
-        category: 'Starters',
-        description: 'Spicy Indo-Chinese chicken'
+        name: 'Chicken Noodles', 
+        quantity: 2, 
+        price: 180,
+        category: 'Main Course',
+        description: 'Spicy Indo-Chinese chicken',
+        isAvailable: true
       },
       { 
         id: '16', 
-        name: 'Fried Rice', 
+        name: 'Veg Fried Rice', 
         quantity: 1, 
-        price: 200,
-        category: 'Rice',
-        description: 'Chinese style fried rice'
+        price: 150,
+        category: 'Main Course',
+        description: 'Chinese style fried rice',
+        isAvailable: true
       }
     ],
     amount: 550,
@@ -236,18 +252,20 @@ const INITIAL_ORDERS: Order[] = [
       { 
         id: '17', 
         name: 'Gulab Jamun', 
-        quantity: 2, 
-        price: 80,
+        quantity: 4, 
+        price: 120,
         category: 'Desserts',
-        description: 'Sweet milk dumplings'
+        description: 'Sweet milk dumplings',
+        isAvailable: true
       },
       { 
         id: '18', 
         name: 'Mango Lassi', 
         quantity: 2, 
-        price: 100,
+        price: 80,
         category: 'Beverages',
-        description: 'Mango yogurt smoothie'
+        description: 'Mango yogurt smoothie',
+        isAvailable: true
       }
     ],
     amount: 360,

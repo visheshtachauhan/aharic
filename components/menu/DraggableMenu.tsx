@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { DragDropContext, Droppable, Draggable } from 'react-beautiful-dnd';
+import { DragDropContext, Droppable, Draggable, DropResult } from 'react-beautiful-dnd';
 import { Card } from '@/components/ui/card';
 import { Star, GripVertical } from 'lucide-react';
 import { MenuItem } from '@/types/order';
@@ -12,15 +11,7 @@ interface DraggableMenuProps {
 }
 
 export function DraggableMenu({ items, onReorder }: DraggableMenuProps) {
-  const [isDragging, setIsDragging] = useState(false);
-
-  const handleDragStart = () => {
-    setIsDragging(true);
-  };
-
-  const handleDragEnd = (result: any) => {
-    setIsDragging(false);
-
+  const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
 
     const newItems = Array.from(items);
@@ -31,7 +22,7 @@ export function DraggableMenu({ items, onReorder }: DraggableMenuProps) {
   };
 
   return (
-    <DragDropContext onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+    <DragDropContext onDragEnd={handleDragEnd}>
       <Droppable droppableId="menu-items">
         {(provided) => (
           <div

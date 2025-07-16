@@ -1,29 +1,43 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { Providers } from './providers';
+import { createClient } from '@/lib/supabase/server';
 
 const inter = Inter({ subsets: ['latin'] });
 
-export const metadata: Metadata = {
-  title: 'Restaurant Menu Management',
-  description: 'Manage your restaurant menu with ease',
+export const viewport: Viewport = {
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#000000' },
+  ],
 };
 
-export default function RootLayout({
+export const metadata: Metadata = {
+  title: 'Restaurant Menu Management System',
+  description: 'A modern restaurant menu management system',
+  icons: {
+    icon: '/favicon.ico',
+  },
+};
+
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
         <ErrorBoundary>
-          <Providers>
+          <Providers session={session}>
             {children}
-            <Toaster />
           </Providers>
         </ErrorBoundary>
       </body>

@@ -20,9 +20,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { motion, AnimatePresence } from "framer-motion"
-import { Check, Clock, X, ChevronRight, AlertCircle, Menu, Filter, Plus, Volume2, VolumeX } from "lucide-react"
+import { Check, Clock, X, ChevronRight, AlertCircle, Filter, Volume2, VolumeX } from "lucide-react"
 import { useMediaQuery } from "@/hooks/use-media-query"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,7 +70,6 @@ export function OrderManagement() {
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [showOrderDetails, setShowOrderDetails] = useState(false)
   const [filterStatus, setFilterStatus] = useState<Order["status"] | "all">("all")
-  const [showMobileMenu, setShowMobileMenu] = useState(false)
   const isMobile = useMediaQuery("(max-width: 768px)")
   const [showDeliveryAnimation, setShowDeliveryAnimation] = useState(false)
   const [totalProfit, setTotalProfit] = useState(0)

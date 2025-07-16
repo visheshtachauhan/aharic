@@ -1,10 +1,9 @@
-import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import { sendEmail } from '@/lib/email';
+import { createRouteHandlerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 
-// Validation schema for support request
-const supportRequestSchema = z.object({
+const supportSchema = z.object({
   name: z.string().min(1, 'Name is required'),
   email: z.string().email('Invalid email address'),
   phone: z.string().optional(),
@@ -12,118 +11,75 @@ const supportRequestSchema = z.object({
   message: z.string().min(10, 'Message must be at least 10 characters long'),
 });
 
-// In-memory storage for support requests when MongoDB is unavailable
-const memoryStorage: any[] = [];
+export async function POST(request: NextRequest) {
+  const cookieStore = cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
 
-export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    
-    // Validate input using Zod schema
-    const validationResult = supportRequestSchema.safeParse(body);
-    if (!validationResult.success) {
-      return NextResponse.json(
-        { 
-          success: false, 
-          message: 'Validation failed', 
-          errors: validationResult.error.errors 
+    const json = await request.json();
+    const body = supportSchema.parse(json);
+
+    const { data, error } = await supabase
+      .from('support_requests')
+      .insert([
+        {
+          name: body.name,
+          email: body.email,
+          phone: body.phone,
+          subject: body.subject,
+          message: body.message,
+          status: 'new',
         },
-        { status: 400 }
-      );
+      ])
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase error inserting support request:', error);
+      return NextResponse.json({ message: error.message }, { status: 400 });
     }
 
-    const { name, email, phone, subject, message } = validationResult.data;
-    let requestId = '';
+    return NextResponse.json(data);
 
-    try {
-      // Try to connect to MongoDB
-      const db = await connectToDatabase();
-      
-      // Save support request to database
-      const result = await db.collection('support_requests').insertOne({
-        name,
-        email,
-        phone,
-        subject,
-        message,
-        status: 'new',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip'),
-        userAgent: request.headers.get('user-agent'),
-        restaurantId: request.headers.get('x-restaurant-id') || 'platform',
-        source: request.headers.get('x-restaurant-id') ? 'restaurant' : 'platform',
-        assignedTo: null,
-        notes: [],
-        priority: 'normal'
-      });
-      
-      requestId = result.insertedId?.toString() || `memory-${Date.now()}`;
-
-      // Try to send email notification
-      try {
-        console.log('Attempting to send email notification to:', process.env.SUPPORT_EMAIL);
-        await sendEmail({
-          to: process.env.SUPPORT_EMAIL || 'support@thetastycorner.com',
-          subject: `New Support Request: ${subject}`,
-          html: `
-            <!DOCTYPE html>
-            <html>
-            <head>
-              <style>
-                body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-                .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                .header { background: #FF7300; color: white; padding: 20px; text-align: center; border-radius: 5px; }
-                .content { padding: 20px; background: #f9f9f9; border-radius: 5px; margin: 20px 0; }
-                .footer { text-align: center; font-size: 12px; color: #666; margin-top: 20px; }
-              </style>
-            </head>
-            <body>
-              <div class="container">
-                <div class="header">
-                  <h2>New Support Request</h2>
-                </div>
-                <div class="content">
-                  <p><strong>Request ID:</strong> ${requestId}</p>
-                  <p><strong>Name:</strong> ${name}</p>
-                  <p><strong>Email:</strong> ${email}</p>
-                  ${phone ? `<p><strong>Phone:</strong> ${phone}</p>` : ''}
-                  <p><strong>Subject:</strong> ${subject}</p>
-                  <p><strong>Message:</strong></p>
-                  <p style="white-space: pre-wrap;">${message}</p>
-                </div>
-                <div class="footer">
-                  <p>Submitted on: ${new Date().toLocaleString()}</p>
-                  <p>The Tasty Corner Support Team</p>
-                </div>
-              </div>
-            </body>
-            </html>
-          `,
-        });
-        console.log('Email sent successfully');
-      } catch (emailError) {
-        console.error('Failed to send email notification:', emailError);
-        // Don't fail the request if email fails
-      }
-
-      return NextResponse.json({ 
-        success: true, 
-        message: 'Support request submitted successfully. Our team will contact you soon.',
-        requestId
-      });
-    } catch (dbError) {
-      console.error('Database error:', dbError);
-      throw new Error('Failed to save support request. Please try again later.');
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      return NextResponse.json({ message: 'Invalid form data', errors: error.errors }, { status: 400 });
     }
-  } catch (error: any) {
-    console.error('Support request error:', error);
-    return NextResponse.json(
-      { 
-        success: false, 
-        message: error.message || 'An unexpected error occurred. Please try again later.' 
-      },
-      { status: 500 }
-    );
+    console.error('Error processing support request:', error);
+    return NextResponse.json({ message: 'An unexpected error occurred.' }, { status: 500 });
   }
-} 
+}
+
+export async function GET() {
+  const cookieStore = cookies();
+  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+
+  // Check if the user is an admin before fetching all requests.
+  // This is a placeholder for actual role-based access control.
+  // In a real app, you would check a 'roles' table or a custom claim.
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+  }
+
+  // For now, we assume any logged-in user can see this for simplicity.
+  // You should lock this down to an 'admin' role.
+
+  try {
+    const { data, error } = await supabase
+      .from('support_requests')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Supabase error fetching support requests:', error);
+      return NextResponse.json({ message: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json(data);
+
+  } catch (error) {
+    console.error('Error fetching support requests:', error);
+    return NextResponse.json({ message: 'An unexpected error occurred.' }, { status: 500 });
+  }
+}

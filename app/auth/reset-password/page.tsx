@@ -1,92 +1,99 @@
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { useToast } from "@/components/ui/use-toast";
-import { createBrowserClient } from "@supabase/ssr";
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
 
 export default function ResetPasswordPage() {
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { toast } = useToast();
 
-  const supabase = createBrowserClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
+  useEffect(() => {
+    const error = searchParams.get('error_description');
+    if (error) {
+      toast.error(error.replace(/\+/g, ' '));
+    }
+  }, [searchParams]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (password !== confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    if (password.length < 6) {
+        toast.error('Password must be at least 6 characters long');
+        return;
+    }
 
+    setIsSubmitting(true);
     try {
-      const { error } = await supabase.auth.updateUser({
-        password: password,
-      });
+      // Supabase's updateUser is context-aware and works after the redirect
+      // We don't have the updateUserPassword in our context, let's adapt
+      // This part is tricky as the user session is what's needed.
+      // The onAuthStateChange should handle the user object update.
+      // Let's call the supabase client directly here for the update.
+      const { createClient } = await import('@/lib/supabase/client');
+      const supabase = createClient();
+      
+      const { error } = await supabase.auth.updateUser({ password });
 
-      if (error) {
-        throw error;
-      }
-
-      toast({
-        title: 'Success',
-        description: 'Your password has been updated successfully.',
-      });
-
+      if (error) throw error;
+      
+      toast.success('Password updated successfully! You can now log in with your new password.');
       router.push('/auth/login');
-    } catch (error: any) {
-      toast({
-        title: 'Error',
-        description: error.message || 'An unexpected error occurred',
-        variant: 'destructive',
-      });
+    } catch (e: unknown) {
+      const error = e as Error;
+      toast.error(error.message || 'Failed to update password');
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Reset your password
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Please enter your new password below
-          </p>
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="w-full max-w-md space-y-8 p-8">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold">Reset Your Password</h1>
+          <p className="text-gray-500">Enter your new password below.</p>
         </div>
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div>
-            <label htmlFor="password" className="sr-only">
-              New Password
-            </label>
-            <input
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <Label htmlFor="password">New Password</Label>
+            <Input
               id="password"
-              name="password"
               type="password"
-              required
-              className="appearance-none rounded relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-              placeholder="New password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              minLength={6}
+              required
+              placeholder="Enter your new password"
+              disabled={isSubmitting}
             />
           </div>
-
-          <div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? 'Updating...' : 'Update Password'}
-            </button>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">Confirm New Password</Label>
+            <Input
+              id="confirm-password"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              placeholder="Confirm your new password"
+              disabled={isSubmitting}
+            />
           </div>
+          <Button type="submit" className="w-full" disabled={isSubmitting}>
+            {isSubmitting ? 'Resetting...' : 'Reset Password'}
+          </Button>
         </form>
       </div>
     </div>
   );
-} 
+}

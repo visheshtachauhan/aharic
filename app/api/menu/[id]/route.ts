@@ -1,38 +1,21 @@
 import { NextResponse } from 'next/server';
-import { getSupabaseSession } from '@/lib/supabase';
+import { getSupabaseSession } from '@/lib/supabase/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
-import { z } from 'zod';
-
-// Validation schema for menu item updates
-const menuItemUpdateSchema = z.object({
-  name: z.string().min(1, 'Name is required').optional(),
-  category: z.string().min(1, 'Category is required').optional(),
-  price: z.number().min(0, 'Price must be positive').optional(),
-  description: z.string().min(1, 'Description is required').optional(),
-  image: z.string().url('Invalid image URL').optional(),
-  isAvailable: z.boolean().optional()
-});
-
-const updateMenuItemSchema = z.object({
-  name: z.string().min(1, 'Name is required').optional(),
-  price: z.number().min(0, 'Price must be a positive number').optional(),
-  category: z.string().min(1, 'Category is required').optional(),
-});
 
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
-  const { session } = await getSupabaseSession();
-
+  const session = await getSupabaseSession();
   if (!session) {
-    return new NextResponse('Unauthorized', { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
+    const { id } = params;
     const db = await connectToDatabase();
-    const menu = await db.collection('menus').findOne({ _id: new ObjectId(params.id) });
+    const menu = await db.collection('menus').findOne({ id: new ObjectId(id) });
     
     if (!menu) {
       return new NextResponse('Menu not found', { status: 404 });
@@ -79,7 +62,7 @@ export async function PATCH(
     const collection = db.collection('menu');
 
     const result = await collection.updateOne(
-      { _id: new ObjectId(id) },
+      { id: new ObjectId(id) },
       { $set: body }
     );
 
@@ -110,7 +93,7 @@ export async function DELETE(
     const db = await connectToDatabase();
     const collection = db.collection('menu');
 
-    const result = await collection.deleteOne({ _id: new ObjectId(id) });
+    const result = await collection.deleteOne({ id: new ObjectId(id) });
 
     if (result.deletedCount === 0) {
       return NextResponse.json(

@@ -1,11 +1,10 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
-import { initSocketServer } from '@/lib/socket';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
 import { z } from 'zod';
-import { createRouteHandlerClient } from '@supabase/auth-helpers-nextjs';
+import type { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 
 const updateOrderSchema = z.object({
   status: z.enum(['pending', 'preparing', 'ready', 'completed', 'cancelled']),
@@ -25,6 +24,12 @@ export async function GET(
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
+        set(name: string, value: string, options: Partial<ResponseCookie>) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: Partial<ResponseCookie>) {
+          cookieStore.set({ name, value: '', ...options });
+        },
       },
     }
   );
@@ -36,7 +41,7 @@ export async function GET(
   }
 
   try {
-    const db = await connectToDatabase();
+    const { db } = await connectToDatabase();
     const order = await db.collection('orders').findOne({ _id: new ObjectId(params.id) });
     
     if (!order) {
@@ -54,8 +59,27 @@ export async function PATCH(
   req: NextRequest,
   { params }: { params: { id: string } }
 ) {
+  const cookieStore = cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options: Partial<ResponseCookie>) {
+          cookieStore.set({ name, value, ...options });
+        },
+        remove(name: string, options: Partial<ResponseCookie>) {
+          cookieStore.set({ name, value: '', ...options });
+        },
+      },
+    }
+  );
+
   try {
-    const session = await getServerSession();
+    const { data: { session } } = await supabase.auth.getSession();
     
     // Check authentication
     if (!session) {
@@ -80,7 +104,7 @@ export async function PATCH(
       );
     }
 
-    const db = await connectToDatabase();
+    const { db } = await connectToDatabase();
     
     // Update the order
     const result = await db.collection('orders').updateOne(
@@ -102,21 +126,6 @@ export async function PATCH(
         { status: 404 }
       );
     }
-
-    // Emit socket event for real-time updates
-    const io = initSocketServer(req as any, {} as any);
-    if (io) {
-      // Emit to restaurant channel
-      io.to(`restaurant-${params.id}`).emit('order-status-changed', {
-        orderId: params.id,
-        status: validationResult.data.status
-      });
-      
-      // Emit to specific order channel for customer
-      io.to(`order-${params.id}`).emit(`order-update-${params.id}`, {
-        status: validationResult.data.status
-      });
-    }
     
     return NextResponse.json({ 
       success: true, 
@@ -132,4 +141,4 @@ export async function PATCH(
       { status: 500 }
     );
   }
-} 
+}

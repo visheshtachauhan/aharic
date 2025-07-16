@@ -1,6 +1,8 @@
 "use client";
 
 import React, { createContext, useState, useEffect, useContext, ReactNode } from "react";
+import { io, type Socket } from "socket.io-client";
+import { toast } from "sonner";
 
 // Mock socket implementation since we don't have a real backend yet
 interface MockSocket {
@@ -34,23 +36,15 @@ export interface OrderItem {
 }
 
 interface SocketContextType {
-  socket: MockSocket | null;
+  socket: Socket | null;
   isConnected: boolean;
-  connect: () => void;
-  disconnect: () => void;
-  orders: Order[];
-  liveOrders: Order[];
+  joinOrderRoom: (orderId: string) => void;
+  leaveOrderRoom: (orderId: string) => void;
+  joinRestaurantRoom: (restaurantId: string) => void;
+  leaveRestaurantRoom: (restaurantId: string) => void;
 }
 
-// Initial context value
-const SocketContext = createContext<SocketContextType>({
-  socket: null,
-  isConnected: false,
-  connect: () => {},
-  disconnect: () => {},
-  orders: [],
-  liveOrders: [],
-});
+const SocketContext = createContext<SocketContextType | undefined>(undefined);
 
 interface SocketProviderProps {
   children: ReactNode;
@@ -104,249 +98,103 @@ const mockOrders: Order[] = [
   }
 ];
 
-export const SocketProvider: React.FC<SocketProviderProps> = ({ children }) => {
-  const [socket, setSocket] = useState<MockSocket | null>(null);
+export function SocketProvider({ children }: SocketProviderProps) {
+  const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
-  const [liveOrders, setLiveOrders] = useState<Order[]>([]);
 
   useEffect(() => {
-    // Create a mock socket on mount
-    const mockSocket: MockSocket = {
-      connected: false,
-      connect: () => {
-        mockSocket.connected = true;
-        const event = new CustomEvent("connect");
-        window.dispatchEvent(event);
-      },
-      disconnect: () => {
-        mockSocket.connected = false;
-        const event = new CustomEvent("disconnect");
-        window.dispatchEvent(event);
-      },
-      on: (event, callback) => {
-        window.addEventListener(event, callback as EventListener);
-      },
-      off: (event, callback) => {
-        window.removeEventListener(event, callback as EventListener);
-      },
-      emit: (event, ...args) => {
-        // Special handling for join-room event
-        if (event === "join-order") {
-          const orderId = args[0];
-          console.log(`Joined order room: ${orderId}`);
-          
-          // Simulate server pushing order updates
-          setTimeout(() => {
-            const updatedOrder = mockOrders.find(o => o.id === orderId);
-            if (updatedOrder) {
-              const statusEvent = new CustomEvent("order-status-update", { 
-                detail: { 
-                  orderId, 
-                  status: updatedOrder.status,
-                  progress: getOrderProgress(updatedOrder.status)
-                } 
-              });
-              window.dispatchEvent(statusEvent);
-            }
-          }, 2000);
-        }
-        
-        if (event === "join-restaurant") {
-          const restaurantId = args[0];
-          console.log(`Joined restaurant room: ${restaurantId}`);
-          
-          // Simulate server pushing orders
-          setTimeout(() => {
-            const ordersEvent = new CustomEvent("orders-updated", { 
-              detail: { orders: mockOrders } 
-            });
-            window.dispatchEvent(ordersEvent);
-            
-            // Simulate a new order coming in after a delay
-            setTimeout(() => {
-              const newOrder: Order = {
-                id: `order-${Date.now()}`,
-                tableNumber: Math.floor(Math.random() * 10) + 1,
-                items: [
-                  { 
-                    id: `item-${Date.now()}-1`, 
-                    name: "Dal Makhani", 
-                    price: 250, 
-                    quantity: 1 
-                  },
-                  { 
-                    id: `item-${Date.now()}-2`, 
-                    name: "Butter Naan", 
-                    price: 60, 
-                    quantity: 2 
-                  }
-                ],
-                status: "pending",
-                total: 370,
-                timestamp: new Date().toISOString(),
-              };
-              
-              const newOrderEvent = new CustomEvent("new-order", { 
-                detail: { order: newOrder } 
-              });
-              window.dispatchEvent(newOrderEvent);
-              
-              // Add to orders
-              setOrders(prev => [newOrder, ...prev]);
-              setLiveOrders(prev => [newOrder, ...prev]);
-            }, 15000);
-          }, 1000);
-        }
-        
-        // Dispatch regular custom event for other events
-        const customEvent = new CustomEvent(event, { detail: args });
-        window.dispatchEvent(customEvent);
-      },
-    };
+    const socketInstance = io(process.env.NEXT_PUBLIC_SOCKET_URL || "http://localhost:3001", {
+      autoConnect: true,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
 
-    setSocket(mockSocket);
+    socketInstance.on('connect', () => {
+      setIsConnected(true);
+    });
 
-    // Clean up event listeners
+    socketInstance.on('disconnect', () => {
+      setIsConnected(false);
+    });
+
+    socketInstance.on('error', (error: Error) => {
+      toast.error(`Socket Error: ${error.message}`);
+    });
+
+    setSocket(socketInstance);
+
     return () => {
-      if (mockSocket) {
-        mockSocket.disconnect();
-      }
+      socketInstance.disconnect();
     };
   }, []);
 
-  useEffect(() => {
-    if (!socket) return;
+  const joinOrderRoom = (orderId: string) => {
+    if (!socket || !isConnected) {
+      toast.error("Connection Error: Not connected to real-time updates.");
+      return;
+    }
 
-    const handleConnect = () => {
-      console.log("Socket connected");
-      setIsConnected(true);
-    };
-
-    const handleDisconnect = () => {
-      console.log("Socket disconnected");
-      setIsConnected(false);
-    };
-
-    const handleOrdersUpdated = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      const { orders } = customEvent.detail;
-      setOrders(orders);
-      
-      // Filter for live orders (pending, preparing, ready)
-      const live = orders.filter(
-        (order: Order) => 
-          order.status === "pending" || 
-          order.status === "preparing" || 
-          order.status === "ready"
-      );
-      setLiveOrders(live);
-    };
-    
-    const handleNewOrder = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      const { order } = customEvent.detail;
-      
-      setOrders(prev => [order, ...prev]);
-      
-      // Add to live orders if applicable
-      if (["pending", "preparing", "ready"].includes(order.status)) {
-        setLiveOrders(prev => [order, ...prev]);
-      }
-    };
-    
-    const handleOrderStatusChanged = (e: Event) => {
-      const customEvent = e as CustomEvent;
-      const { orderId, status } = customEvent.detail;
-      
-      // Update orders
-      setOrders(prev => 
-        prev.map(order => 
-          order.id === orderId 
-            ? { ...order, status } 
-            : order
-        )
-      );
-      
-      // Update live orders - remove if delivered/cancelled
-      if (status === "delivered" || status === "cancelled") {
-        setLiveOrders(prev => prev.filter(order => order.id !== orderId));
-      } else {
-        setLiveOrders(prev => 
-          prev.map(order => 
-            order.id === orderId 
-              ? { ...order, status } 
-              : order
-          )
-        );
-      }
-    };
-
-    socket.on("connect", handleConnect);
-    socket.on("disconnect", handleDisconnect);
-    socket.on("orders-updated", handleOrdersUpdated);
-    socket.on("new-order", handleNewOrder);
-    socket.on("order-status-changed", handleOrderStatusChanged);
-
-    // Auto connect after a short delay to simulate real connection behavior
-    const connectTimeout = setTimeout(() => {
-      connect();
-    }, 1500);
-
-    return () => {
-      socket.off("connect", handleConnect);
-      socket.off("disconnect", handleDisconnect);
-      socket.off("orders-updated", handleOrdersUpdated);
-      socket.off("new-order", handleNewOrder);
-      socket.off("order-status-changed", handleOrderStatusChanged);
-      clearTimeout(connectTimeout);
-    };
-  }, [socket]);
-
-  const connect = () => {
-    if (socket && !socket.connected) {
-      socket.connect();
+    try {
+      socket.emit('join:order', orderId);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to join order room. Please try again.");
     }
   };
 
-  const disconnect = () => {
-    if (socket && socket.connected) {
-      socket.disconnect();
+  const leaveOrderRoom = (orderId: string) => {
+    if (!socket || !isConnected) return;
+
+    try {
+      socket.emit('leave:order', orderId);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to leave order room. Please try again.");
     }
   };
-  
-  // Helper function to get order progress percentage
-  const getOrderProgress = (status: OrderStatus): number => {
-    switch (status) {
-      case "pending": return 25;
-      case "preparing": return 50;
-      case "ready": return 75;
-      case "delivered": return 100;
-      case "cancelled": return 0;
-      default: return 0;
+
+  const joinRestaurantRoom = (restaurantId: string) => {
+    if (!socket || !isConnected) {
+      toast.error("Connection Error: Not connected to real-time updates.");
+      return;
+    }
+
+    try {
+      socket.emit('join:restaurant', restaurantId);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to join restaurant room. Please try again.");
+    }
+  };
+
+  const leaveRestaurantRoom = (restaurantId: string) => {
+    if (!socket || !isConnected) return;
+
+    try {
+      socket.emit('leave:restaurant', restaurantId);
+    } catch (error: any) {
+      toast.error(error.message || "Failed to leave restaurant room. Please try again.");
     }
   };
 
   return (
-    <SocketContext.Provider 
-      value={{ 
-        socket, 
-        isConnected, 
-        connect, 
-        disconnect,
-        orders,
-        liveOrders
+    <SocketContext.Provider
+      value={{
+        socket,
+        isConnected,
+        joinOrderRoom,
+        leaveOrderRoom,
+        joinRestaurantRoom,
+        leaveRestaurantRoom,
       }}
     >
       {children}
     </SocketContext.Provider>
   );
-};
+}
 
-export const useSocket = () => {
+export function useSocket() {
   const context = useContext(SocketContext);
-  if (!context) {
+  if (context === undefined) {
     throw new Error("useSocket must be used within a SocketProvider");
   }
   return context;
-}; 
+} 

@@ -1,10 +1,18 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
+import { getCollection } from '@/lib/mongodb';
+import { headers } from 'next/headers';
 
-export async function GET(request: Request) {
+type RestaurantQuery = {
+  $or?: Array<{ [key: string]: { $regex: string; $options: string } }>;
+  'menuItems.category'?: string;
+};
+
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url);
-    const { db } = await connectToDatabase();
+    const headersList = headers();
+    const searchParams = new URLSearchParams(headersList.get('x-search-params') || '');
+    const restaurantsCollection = await getCollection('restaurants');
 
     // Get query parameters
     const page = parseInt(searchParams.get('page') || '1');
@@ -13,7 +21,7 @@ export async function GET(request: Request) {
     const category = searchParams.get('category') || '';
 
     // Build query
-    const query: any = {};
+    const query: RestaurantQuery = {};
     if (search) {
       query.$or = [
         { name: { $regex: search, $options: 'i' } },
@@ -25,10 +33,10 @@ export async function GET(request: Request) {
     }
 
     // Get total count for pagination
-    const total = await db.restaurants.countDocuments(query);
+    const total = await restaurantsCollection.countDocuments(query);
 
     // Get restaurants with pagination
-    const restaurants = await db.restaurants
+    const restaurants = await restaurantsCollection
       .find(query)
       .skip((page - 1) * limit)
       .limit(limit)

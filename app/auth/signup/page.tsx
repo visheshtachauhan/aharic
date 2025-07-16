@@ -5,100 +5,39 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useToast } from "@/components/ui/use-toast";
 import Link from "next/link";
 import { Mail, Lock, Loader2, AlertCircle } from "lucide-react";
-import { useAuth } from "@/app/providers";
+import { useAuth } from '@/contexts/auth-context';
 import { useRouter } from "next/navigation";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { toast } from 'sonner';
 
 export default function SignUpPage() {
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const { toast } = useToast();
-  const { signUp } = useAuth();
+  const { signUp, isSigningUp } = useAuth();
   const router = useRouter();
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     
-    if (loading) return;
-    
-    setLoading(true);
-    
     const formData = new FormData(event.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
     const confirmPassword = formData.get('confirmPassword') as string;
 
-    // Log form data (excluding passwords)
-    console.log('Sign up attempt:', {
-      email,
-      passwordLength: password?.length,
-      confirmPasswordLength: confirmPassword?.length
-    });
-
-    // Validate inputs
-    if (!email || !password || !confirmPassword) {
-      setError('Please fill in all fields');
-      setLoading(false);
-      return;
-    }
-
-    // Validate email format
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address');
-      setLoading(false);
-      return;
-    }
-
-    // Validate password
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters long');
-      setLoading(false);
-      return;
-    }
-
-    // Check if passwords match
     if (password !== confirmPassword) {
       setError('Passwords do not match');
-      setLoading(false);
       return;
     }
     
     try {
-      const { error } = await signUp(email, password);
-      
-      if (error) {
-        console.error('Sign up error:', error);
-        
-        // Enhanced error handling
-        if (error.includes('already registered')) {
-          setError('This email is already registered. Please try logging in instead.');
-        } else if (error.includes('password')) {
-          setError('Password is too weak. Please use a stronger password.');
-        } else {
-          setError(error);
-        }
-        
-        setLoading(false);
-        return;
-      }
-
-      // Show success message
-      toast({
-        title: "Success",
-        description: "Please check your email to verify your account.",
-      });
-
-      // Redirect to login
+      await signUp(email, password);
+      toast.info("Please check your email to verify your account.");
       router.push('/auth/login');
-    } catch (error) {
-      console.error('Unexpected error:', error);
-      setError('An unexpected error occurred. Please try again.');
-    setLoading(false);
+    } catch (e: unknown) {
+        const error = e as Error;
+        setError(error.message || "An unexpected error occurred.");
     }
   }
 
@@ -131,7 +70,7 @@ export default function SignUpPage() {
                   placeholder="Enter your email"
                   className="pl-10"
                   required
-                  disabled={loading}
+                  disabled={isSigningUp}
                   autoComplete="email"
                 />
               </div>
@@ -147,7 +86,7 @@ export default function SignUpPage() {
                   placeholder="Create a password"
                   className="pl-10"
                   required
-                  disabled={loading}
+                  disabled={isSigningUp}
                   autoComplete="new-password"
                 />
               </div>
@@ -163,7 +102,7 @@ export default function SignUpPage() {
                   placeholder="Confirm your password"
                   className="pl-10"
                   required
-                  disabled={loading}
+                  disabled={isSigningUp}
                   autoComplete="new-password"
                 />
               </div>
@@ -173,9 +112,9 @@ export default function SignUpPage() {
             <Button
               type="submit"
               className="w-full"
-              disabled={loading}
+              disabled={isSigningUp}
             >
-              {loading ? (
+              {isSigningUp ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Creating account...
@@ -195,4 +134,4 @@ export default function SignUpPage() {
       </Card>
     </div>
   );
-} 
+}

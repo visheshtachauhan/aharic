@@ -6,11 +6,10 @@ const defaultPlaceholder = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2
 interface MenuItemImageProps {
   url?: string;
   name: string;
-  category?: string;
   className?: string;
 }
 
-export function MenuItemImage({ url, name, category, className = "h-40" }: MenuItemImageProps) {
+export function MenuItemImage({ url, name, className = "h-40" }: MenuItemImageProps) {
   const [hasError, setHasError] = useState(false);
   const imageUrl = hasError || !url ? defaultPlaceholder : url;
 
@@ -31,4 +30,4 @@ export function MenuItemImage({ url, name, category, className = "h-40" }: MenuI
       <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
     </div>
   );
-} 
+}

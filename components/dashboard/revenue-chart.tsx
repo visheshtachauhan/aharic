@@ -42,9 +42,15 @@ const monthlyData = [
   { name: "Jun", revenue: 880000 },
 ];
 
+interface PayloadItem {
+  name: string;
+  value: number;
+  payload: { name: string; revenue: number };
+}
+
 interface CustomTooltipProps {
   active?: boolean;
-  payload?: any[];
+  payload?: PayloadItem[];
   label?: string;
 }
 

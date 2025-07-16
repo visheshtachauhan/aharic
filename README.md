@@ -1,43 +1,91 @@
-# Menu Management System
+# Restaurant Menu Management System
 
-## Image Setup Instructions
+A modern, full-stack restaurant management system built with Next.js, MongoDB, and NextAuth.js.
 
-1. Create a default food image:
-   - Save a simple food image as `public/images/default-food.jpg`
-   - This will be used as the fallback for all menu items
+## Features
 
-2. Create category images:
-   - Save category-specific images in `public/images/categories/`
-   - Required images:
-     - appetizers.jpg
-     - soups.jpg
-     - salads.jpg
-     - main-course.jpg
-     - breads.jpg
-     - rice-noodles.jpg
-     - desserts.jpg
-     - beverages.jpg
-     - sides.jpg
-     - specials.jpg
+- 🔐 Secure authentication with NextAuth.js
+- 📱 Responsive design for all devices
+- 🍽️ Menu management with categories and items
+- 📊 Real-time analytics dashboard
+- 💳 Loyalty program management
+- 🎯 QR code-based table ordering
+- 📈 Sales and performance tracking
+- 🔔 Real-time notifications
+- 📱 Mobile-friendly interface
 
-3. Image Guidelines:
-   - Use JPG format for better compatibility
-   - Recommended size: 600x400 pixels
-   - Maximum file size: 5MB per image
+## Tech Stack
 
-4. Uploaded images:
-   - All uploaded images will be stored in `public/uploads/`
-   - They will be automatically renamed with unique IDs
+- **Frontend**: Next.js 14, React 18, TailwindCSS
+- **Backend**: Next.js API Routes
+- **Database**: MongoDB
+- **Authentication**: NextAuth.js
+- **Real-time**: Socket.IO
+- **Styling**: TailwindCSS, Radix UI
+- **Charts**: Recharts
+- **Forms**: React Hook Form
+- **Validation**: Zod
+- **Notifications**: React Hot Toast
+- **Animations**: Framer Motion
 
-## Usage
+## Prerequisites
 
-1. When adding a new menu item:
-   - You can upload a custom image
-   - If upload fails, the system will use the category image
-   - If category image is missing, it will use the default food image
+- Node.js 18+ and npm
+- MongoDB instance
+- Environment variables (see `.env.example`)
 
-2. The system will automatically handle:
-   - Image uploads
-   - Fallback images
-   - Image optimization
-   - Error recovery 
+## Getting Started
+
+1. Clone the repository:
+   ```bash
+   git clone <repository-url>
+   cd restaurant-menu-management
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Set up environment variables:
+   ```bash
+   cp .env.example .env.local
+   ```
+   Edit `.env.local` with your configuration.
+
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
+
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Environment Variables
+
+Create a `.env.local` file with the following variables:
+
+```env
+# MongoDB
+MONGODB_URI=your_mongodb_uri
+
+# NextAuth
+NEXTAUTH_URL=http://localhost:3000
+NEXTAUTH_SECRET=your_nextauth_secret
+
+# Email (for password reset)
+EMAIL_SERVER_HOST=smtp.example.com
+EMAIL_SERVER_PORT=587
+EMAIL_SERVER_USER=your_email
+EMAIL_SERVER_PASSWORD=your_password
+EMAIL_FROM=noreply@example.com
+
+
+# Twilio
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=your_twilio_phone_number
+```
+
+## Available Scripts
+
+- `npm run dev`

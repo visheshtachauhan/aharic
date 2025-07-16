@@ -17,7 +17,7 @@ interface FavoriteOrder {
   items: Array<{
     menuItemId: MenuItem;
     quantity: number;
-    customizations?: Record<string, any>;
+    customizations?: Record<string, string | number | boolean>;
   }>;
   savedAt: string;
 }
@@ -133,4 +133,4 @@ export function FavoriteOrders({ orders, onReorder, className = '' }: FavoriteOr
       </motion.div>
     </Card>
   );
-} 
+}

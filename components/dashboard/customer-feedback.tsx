@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { Star, StarHalf, ChevronRight, MessageSquare, Flag, ThumbsUp } from "lucide-react";
+import { Star, StarHalf, MessageSquare, Flag, ThumbsUp } from "lucide-react";
 
 interface Review {
   id: string;
@@ -209,148 +210,118 @@ export function CustomerFeedback() {
     return stars;
   };
 
-  return (
-    <Card className="w-full">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <CardTitle className="text-lg font-semibold">
-          Customer Feedback
-        </CardTitle>
-        <Tabs 
-          value={selectedTab} 
-          onValueChange={(value) => setSelectedTab(value as "recent" | "highlighted" | "pending")}
-          className="h-8"
-        >
-          <TabsList className="h-8">
-            <TabsTrigger value="recent" className="h-8">Recent</TabsTrigger>
-            <TabsTrigger value="highlighted" className="h-8">Highlighted</TabsTrigger>
-            <TabsTrigger value="pending" className="h-8">Pending</TabsTrigger>
-          </TabsList>
-        </Tabs>
-      </CardHeader>
-      <CardContent className="p-4">
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-3xl font-bold">{ratingSummary.average.toFixed(1)}</span>
-                <div className="flex mt-1 items-center">
-                  {renderStars(ratingSummary.average)}
-                  <span className="ml-2 text-sm text-muted-foreground">
-                    {ratingSummary.total} reviews
-                  </span>
-                </div>
+  const ReviewCard = ({ review }: { review: Review }) => (
+    <div className="p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+      <div className="flex justify-between items-start">
+        <div className="flex items-center space-x-3">
+          <Avatar>
+            {review.customerAvatar ? (
+              <Image
+                src={review.customerAvatar}
+                alt={review.customerName}
+                width={40}
+                height={40}
+                className="rounded-full"
+              />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-muted-foreground flex items-center justify-center text-white font-bold">
+                {review.customerName.charAt(0)}
               </div>
-              
-              <div className="text-right">
-                <Button variant="outline" size="sm" className="flex items-center gap-1">
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  <span>Reply All</span>
-                </Button>
-              </div>
-            </div>
-            
-            <div className="space-y-1.5">
-              {[5, 4, 3, 2, 1].map((star) => {
-                const percentage = Math.round((ratingSummary.distribution[star as keyof typeof ratingSummary.distribution] / ratingSummary.total) * 100);
-                return (
-                  <div key={star} className="flex items-center gap-2">
-                    <span className="text-sm w-3">{star}</span>
-                    <Star className="h-3.5 w-3.5 fill-current text-yellow-400" />
-                    <Progress value={percentage} className="h-2 flex-1" />
-                    <span className="text-sm text-muted-foreground w-8 text-right">{percentage}%</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-          
-          <div className="space-y-4 md:border-l md:pl-4">
-            {reviews[selectedTab].map((review) => (
-              <div key={review.id} className="space-y-1 pb-3 border-b last:border-0 last:pb-0">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    <Avatar className="h-8 w-8">
-                      {review.customerAvatar ? (
-                        <img 
-                          src={review.customerAvatar} 
-                          alt={review.customerName}
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.customerName)}&background=random`;
-                          }}
-                        />
-                      ) : (
-                        <img 
-                          src={`https://ui-avatars.com/api/?name=${encodeURIComponent(review.customerName)}&background=random`}
-                          alt={review.customerName}
-                        />
-                      )}
-                    </Avatar>
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm">{review.customerName}</span>
-                        {review.isNew && (
-                          <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 text-xs">
-                            New
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="flex items-center">
-                        {renderStars(review.rating)}
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          {formatDate(review.date)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full">
-                      <ThumbsUp className="h-4 w-4" />
-                    </Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full">
-                      <Flag className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <div>
-                  <p className="text-sm leading-relaxed">{review.comment}</p>
-                  <div className="mt-1 flex items-center">
-                    <Badge variant="outline" className="text-xs">
-                      {review.dish}
-                    </Badge>
-                    
-                    <div className="ml-auto flex gap-1">
-                      {!review.isReplied ? (
-                        <Button variant="outline" size="sm" className="h-7 text-xs">
-                          Reply
-                        </Button>
-                      ) : (
-                        <Badge variant="outline" className="bg-gray-50 text-gray-700 border-gray-200 text-xs">
-                          Replied
-                        </Badge>
-                      )}
-                      
-                      {!review.isHighlighted && (
-                        <Button variant="ghost" size="sm" className="h-7 text-xs">
-                          Highlight
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-            
-            <div className="text-center">
-              <Button variant="ghost" size="sm" className="text-sm text-muted-foreground">
-                View All Reviews <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
+            )}
+          </Avatar>
+          <div>
+            <p className="font-semibold text-sm">{review.customerName}</p>
+            <div className="flex items-center">
+              {renderStars(review.rating)}
+              <span className="ml-2 text-xs text-muted-foreground">
+                on {formatDate(review.date)}
+              </span>
             </div>
           </div>
         </div>
+        <div className="flex items-center justify-center p-2 rounded-lg bg-muted">
+           <Image src={`/food-icons/${review.dish.toLowerCase().replace(/ /g, '-')}.png`} alt={review.dish} width={32} height={32} />
+        </div>
+      </div>
+      <p className="text-sm text-gray-700 mt-3">{review.comment}</p>
+      <div className="flex justify-between items-center mt-3 text-xs text-muted-foreground">
+        <span>Dish: <span className="font-medium text-gray-800">{review.dish}</span></span>
+        <div className="flex items-center gap-3">
+          {review.isNew && <Badge variant="default">New</Badge>}
+          {review.isHighlighted && <Badge variant="destructive">Highlighted</Badge>}
+          {review.isReplied ? (
+            <span className="flex items-center text-green-600">
+              <ThumbsUp className="h-3 w-3 mr-1" /> Replied
+            </span>
+          ) : (
+            <span className="flex items-center text-red-600">
+              <MessageSquare className="h-3 w-3 mr-1" /> Reply Pending
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="flex items-center gap-2 mt-3 pt-3 border-t">
+        <Button size="sm" variant="ghost">
+          <MessageSquare className="h-3 w-3 mr-1" />
+          Reply
+        </Button>
+        <Button size="sm" variant="ghost">
+          <Flag className="h-3 w-3 mr-1" />
+          Flag
+        </Button>
+        <Button size="sm" variant="ghost">
+          <ThumbsUp className="h-3 w-3 mr-1" />
+          Highlight
+        </Button>
+      </div>
+    </div>
+  );
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex justify-between items-center">
+          <div>
+            <CardTitle>Customer Feedback</CardTitle>
+            <p className="text-sm text-muted-foreground mt-1">
+              Recent reviews and ratings from your customers.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <div className="flex items-center">
+              {renderStars(ratingSummary.average)}
+            </div>
+            <span className="font-bold text-lg">{ratingSummary.average.toFixed(1)}</span>
+            <span className="text-sm text-muted-foreground">({ratingSummary.total} reviews)</span>
+          </div>
+        </div>
+        <div className="flex gap-2 pt-4">
+          {Object.entries(ratingSummary.distribution).map(([stars, percentage]) => (
+            <div key={stars} className="w-full">
+              <div className="flex justify-between items-center mb-1">
+                <span className="text-xs">{stars} star</span>
+                <span className="text-xs text-muted-foreground">{percentage}%</span>
+              </div>
+              <Progress value={percentage} className="h-1.5" />
+            </div>
+          ))}
+        </div>
+      </CardHeader>
+      <CardContent>
+        <Tabs value={selectedTab} onValueChange={setSelectedTab as (value: string) => void}>
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="recent">Recent</TabsTrigger>
+            <TabsTrigger value="highlighted">Highlighted</TabsTrigger>
+            <TabsTrigger value="pending">Pending Reply</TabsTrigger>
+          </TabsList>
+          
+          <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+            {reviews[selectedTab].map(review => (
+              <ReviewCard key={review.id} review={review} />
+            ))}
+          </div>
+        </Tabs>
       </CardContent>
     </Card>
   );
-} 
+}

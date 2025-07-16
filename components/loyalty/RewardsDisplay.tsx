@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { Sparkles, Coins, Trophy, ChevronDown, ChevronUp, Gift, CreditCard } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Trophy, ChevronDown, ChevronUp, Gift, CreditCard } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface CustomerRewards {
   cashbackBalance: number;
@@ -24,10 +24,18 @@ interface CustomerRewards {
   };
 }
 
+interface Reward {
+  id: string;
+  name: string;
+  description: string;
+  value: number;
+  expiresAt: string;
+}
+
 interface RewardsDisplayProps {
   phoneNumber: string;
   onUseCashback: (amount: number) => void;
-  onUseReward: (reward: any) => void;
+  onUseReward: (reward: Reward) => void;
   className?: string;
 }
 
@@ -41,11 +49,7 @@ export function RewardsDisplay({
   const [rewards, setRewards] = useState<CustomerRewards | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchRewards();
-  }, [phoneNumber]);
-
-  const fetchRewards = async () => {
+  const fetchRewards = useCallback(async () => {
     try {
       const response = await fetch(`/api/restaurant/loyalty/customers?phone=${phoneNumber}`);
       const data = await response.json();
@@ -57,7 +61,11 @@ export function RewardsDisplay({
     } finally {
       setLoading(false);
     }
-  };
+  }, [phoneNumber]);
+
+  useEffect(() => {
+    fetchRewards();
+  }, [fetchRewards]);
 
   if (loading) {
     return (

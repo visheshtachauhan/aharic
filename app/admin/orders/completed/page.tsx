@@ -6,22 +6,20 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Search, CheckCircle, ChevronDown, Clock } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
-import { useNotifications } from '@/components/ui/notification';
 import { format } from 'date-fns';
 
 export default function CompletedOrdersPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'time' | 'amount'>('time');
   const { getOrdersByStatus } = useOrders();
-  const { addNotification } = useNotifications();
 
   // Get completed orders
   const completedOrders = getOrdersByStatus('completed');
 
   // Filter orders based on search query
   const filteredOrders = completedOrders.filter(order =>
-    order.table.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (order.table && order.table.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (order.id && order.id.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (order.customerName && order.customerName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
@@ -44,8 +42,8 @@ export default function CompletedOrdersPage() {
             {completedOrders.length} completed
           </span>
         </div>
-        <Button 
-          className="primary-gradient" 
+        <Button
+          className="primary-gradient"
           size="sm"
           onClick={() => window.location.reload()}
         >
@@ -58,15 +56,15 @@ export default function CompletedOrdersPage() {
         <div className="flex items-center gap-4">
           <div className="flex-1 relative">
             <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]" />
-            <Input 
-              placeholder="Search completed orders..." 
+            <Input
+              placeholder="Search completed orders..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12 rounded-xl border-[#FF7300]/20 focus:border-[#FF7300] focus:ring-[#FF7300]/20"
             />
           </div>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             className="border-[#FF7300] text-[#FF7300] hover:bg-[#FF7300] hover:text-white"
             onClick={() => setSortBy(sortBy === 'time' ? 'amount' : 'time')}
           >
@@ -80,7 +78,7 @@ export default function CompletedOrdersPage() {
       <Card className="bg-white rounded-xl p-6">
         <div className="space-y-4">
           {sortedOrders.map((order) => (
-            <div 
+            <div
               key={order.id}
               className="bg-[#FFF6F0] rounded-xl p-6 transition-all duration-300 hover:shadow-md cursor-pointer group"
             >
@@ -130,7 +128,7 @@ export default function CompletedOrdersPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                    order.paymentStatus === 'paid' 
+                    order.paymentStatus === 'paid'
                       ? 'bg-green-50 text-green-600'
                       : 'bg-yellow-50 text-yellow-600'
                   }`}>
@@ -150,4 +148,4 @@ export default function CompletedOrdersPage() {
       </Card>
     </div>
   );
-} 
+}

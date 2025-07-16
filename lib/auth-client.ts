@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, User } from '@supabase/supabase-js';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -8,7 +8,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 export type AuthResult = {
   success: boolean;
   error?: string;
-  user?: any;
+  user?: User | null;
 };
 
 export async function signIn(email: string, password: string): Promise<AuthResult> {
@@ -29,7 +29,8 @@ export async function signIn(email: string, password: string): Promise<AuthResul
       success: true,
       user: data.user,
     };
-  } catch (error: any) {
+  } catch (e: unknown) {
+    const error = e as Error;
     return {
       success: false,
       error: error.message,
@@ -55,7 +56,8 @@ export async function signUp(email: string, password: string): Promise<AuthResul
       success: true,
       user: data.user,
     };
-  } catch (error: any) {
+  } catch (e: unknown) {
+    const error = e as Error;
     return {
       success: false,
       error: error.message,
@@ -77,7 +79,8 @@ export async function signOut(): Promise<AuthResult> {
     return {
       success: true,
     };
-  } catch (error: any) {
+  } catch (e: unknown) {
+    const error = e as Error;
     return {
       success: false,
       error: error.message,

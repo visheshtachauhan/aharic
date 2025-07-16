@@ -1,13 +1,13 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 
 export function CursorEffect() {
   const [position, setPosition] = useState({ x: 0, y: 0 })
   const [clicked, setClicked] = useState(false)
   const [ripples, setRipples] = useState<{ x: number; y: number; id: number }[]>([])
-  let rippleId = 0
+  const rippleId = useRef(0)
 
   useEffect(() => {
     const updatePosition = (e: MouseEvent) => {
@@ -22,7 +22,7 @@ export function CursorEffect() {
       const newRipple = {
         x: e.clientX,
         y: e.clientY,
-        id: rippleId++
+        id: rippleId.current++
       }
       setRipples(prev => [...prev, newRipple])
       
@@ -81,4 +81,4 @@ export function CursorEffect() {
       </AnimatePresence>
     </>
   )
-} 
+}

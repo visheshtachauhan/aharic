@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
+import { getCollection } from '@/lib/mongodb';
 
 const initialMenuItems = [
   // Appetizers
@@ -331,31 +331,27 @@ const initialMenuItems = [
 
 export async function GET() {
   try {
-    const db = await connectToDatabase();
+    const menuCollection = await getCollection('menu_items');
     
     // Clear existing menu items
-    await db.collection('menu').deleteMany({});
-    
-    // Add timestamps to each item
-    const itemsWithTimestamps = initialMenuItems.map(item => ({
-      ...item,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    }));
+    await menuCollection.deleteMany({});
     
     // Insert new menu items
-    const result = await db.collection('menu').insertMany(itemsWithTimestamps);
+    const result = await menuCollection.insertMany(initialMenuItems);
     
-    return NextResponse.json({
-      success: true,
-      message: `Successfully seeded ${result.insertedCount} menu items`,
-      count: result.insertedCount
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Menu items seeded successfully',
+      count: result.insertedCount 
     });
   } catch (error) {
     console.error('Error seeding menu items:', error);
-    return NextResponse.json({
-      success: false,
-      message: error instanceof Error ? error.message : 'Failed to seed menu items'
-    }, { status: 500 });
+    return NextResponse.json(
+      { 
+        success: false, 
+        message: 'Failed to seed menu items' 
+      },
+      { status: 500 }
+    );
   }
 } 

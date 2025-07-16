@@ -1,6 +1,5 @@
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
-import { cn } from "@/lib/utils"
 
 interface CustomTabsProps<T extends string> {
   value: T
@@ -28,4 +27,4 @@ export function CustomTabs<T extends string>({
   )
 }
 
-export { TabsList, TabsTrigger, TabsContent } from "./tabs" 
+export { TabsList, TabsTrigger, TabsContent } from "./tabs"

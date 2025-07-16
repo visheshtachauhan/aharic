@@ -68,7 +68,7 @@ export default function SuperAdminSupportPage() {
       setSupportRequests(requestsData.requests);
       setRestaurants(restaurantsData.restaurants);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      toast.error(`Error fetching data: ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -85,10 +85,14 @@ export default function SuperAdminSupportPage() {
       });
 
       if (response.ok) {
+        toast.success('Request updated successfully');
         fetchData();
+      } else {
+        const errorData = await response.json();
+        toast.error(`Failed to update request: ${errorData.message}`);
       }
     } catch (error) {
-      console.error('Error updating request:', error);
+      toast.error(`Error updating request: ${error.message}`);
     }
   };
 
@@ -107,8 +111,7 @@ export default function SuperAdminSupportPage() {
         toast.success('Note added successfully');
       }
     } catch (error) {
-      console.error('Error adding note:', error);
-      toast.error('Failed to add note');
+      toast.error(`Error adding note: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

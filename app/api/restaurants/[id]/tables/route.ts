@@ -1,8 +1,24 @@
 import { NextResponse } from 'next/server';
 import QRCode from 'qrcode';
 
+interface Table {
+  _id: string;
+  restaurantId: string;
+  number: string;
+  capacity: number;
+  status: 'available' | 'occupied' | 'reserved' | 'maintenance';
+  location: {
+    floor?: string;
+    section?: string;
+  };
+  notes: string;
+  qrCode: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // In-memory storage
-const tables = new Map<string, any>();
+const tables = new Map<string, Table>();
 
 // Helper function to generate QR code
 async function generateQRCode(restaurantId: string, tableId: string) {
@@ -116,7 +132,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 }
 
 // PUT /api/restaurants/[id]/tables
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request) {
   try {
     const { tableId, status } = await req.json();
     
@@ -140,7 +156,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 // DELETE /api/restaurants/[id]/tables/[tableId]
-export async function DELETE(req: Request, { params }: { params: { id: string; tableId: string } }) {
+export async function DELETE(req: Request, { params }: { params: { tableId: string } }) {
   try {
     const { tableId } = params;
     

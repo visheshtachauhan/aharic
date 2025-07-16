@@ -15,31 +15,17 @@ interface SavedPaymentMethod {
 }
 
 interface OneClickCheckoutProps {
-  phoneNumber: string;
   totalAmount: number;
   onCheckout: (paymentMethod: SavedPaymentMethod) => Promise<void>;
 }
 
 export default function OneClickCheckout({
-  phoneNumber,
   totalAmount,
   onCheckout
 }: OneClickCheckoutProps) {
   const [loading, setLoading] = useState(false);
-  const [savedMethods, setSavedMethods] = useState<SavedPaymentMethod[]>([]);
+  const [savedMethods, _setSavedMethods] = useState<SavedPaymentMethod[]>([]);
   const { addNotification } = useNotifications();
-
-  const fetchSavedPaymentMethods = async () => {
-    try {
-      const response = await fetch(`/api/restaurant/loyalty/customers?phone=${phoneNumber}`);
-      const data = await response.json();
-      if (data.success && data.customerData?.savedPaymentMethods) {
-        setSavedMethods(data.customerData.savedPaymentMethods);
-      }
-    } catch (error) {
-      console.error('Failed to fetch payment methods:', error);
-    }
-  };
 
   const handleQuickCheckout = async (method: SavedPaymentMethod) => {
     setLoading(true);

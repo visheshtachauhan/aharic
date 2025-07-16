@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -16,8 +15,6 @@ interface TopItem {
 }
 
 export function TopItems() {
-  const [selectedPeriod] = useState<"week">("week");
-  
   const topItems: TopItem[] = [
     {
       id: "item-1",

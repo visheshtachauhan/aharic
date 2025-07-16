@@ -3,6 +3,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import type { ResponseCookie } from 'next/dist/compiled/@edge-runtime/cookies';
 
 export async function signIn(formData: FormData) {
   const cookieStore = cookies();
@@ -14,10 +15,10 @@ export async function signIn(formData: FormData) {
         get(name: string) {
           return cookieStore.get(name)?.value;
         },
-        set(name: string, value: string, options: any) {
+        set(name: string, value: string, options: Partial<ResponseCookie>) {
           cookieStore.set({ name, value, ...options });
         },
-        remove(name: string, options: any) {
+        remove(name: string, options: Partial<ResponseCookie>) {
           cookieStore.set({ name, value: '', ...options });
         },
       },

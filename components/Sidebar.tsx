@@ -3,10 +3,9 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useState, useEffect } from 'react';
-import { LayoutGrid, Table, Menu as MenuIcon, ShoppingBag, Settings, ChevronDown, Clock, CheckCircle, BarChart } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { menuItems } from "@/config/menu-items";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -17,11 +16,6 @@ import dynamic from 'next/dynamic';
 // Dynamically import the Dialog component with no SSR
 const DynamicDialog = dynamic(
   () => import('@/components/ui/dialog').then((mod) => mod.Dialog),
-  { ssr: false }
-);
-
-const DynamicDialogTrigger = dynamic(
-  () => import('@/components/ui/dialog').then((mod) => mod.DialogTrigger),
   { ssr: false }
 );
 
@@ -80,7 +74,8 @@ export function Sidebar() {
       toast.success("Support request submitted successfully! We'll get back to you soon.");
       form.reset();
       setIsDialogOpen(false);
-    } catch (error: any) {
+    } catch (e: unknown) {
+      const error = e as Error;
       console.error('Support request error:', error);
       toast.error(error.message || "Failed to submit support request. Please try again.");
     } finally {

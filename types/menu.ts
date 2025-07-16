@@ -1,5 +1,5 @@
 export interface MenuItem {
-  _id: string;
+  id: string;
   name: string;
   description: string;
   price: number;
@@ -7,10 +7,30 @@ export interface MenuItem {
   image: string;
   isVeg: boolean;
   popular: boolean;
-  spicyLevel: number;
+  spicyLevel: 1 | 2 | 3;
   rating: number;
   reviews: number;
   available: boolean;
   createdAt: string;
   updatedAt: string;
+  variants?: {
+    name: string;
+    price: number;
+  }[];
+  addons?: {
+    name: string;
+    price: number;
+  }[];
+  availability?: {
+    startTime: string;
+    endTime: string;
+    days: string[];
+  };
+  sales?: {
+    total: number;
+    lastWeek: number;
+  };
+  stockQuantity?: number;
+  lastUnavailableDate?: string;
+  autoDisabled?: boolean;
 } 

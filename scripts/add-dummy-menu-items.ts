@@ -25,7 +25,7 @@ const dummyMenuItems = [
     description: "Tender chicken pieces in rich, creamy tomato gravy",
     price: 320,
     category: "Main Course",
-    image: "https://res.cloudinary.com/demo/image/upload/butter-chicken.jpg",
+    image: "/images/placeholders/main-course.png",
     isAvailable: true
   },
   {
@@ -33,7 +33,7 @@ const dummyMenuItems = [
     description: "Grilled cottage cheese marinated in spiced yogurt",
     price: 280,
     category: "Starters",
-    image: "https://res.cloudinary.com/demo/image/upload/paneer-tikka.jpg",
+    image: "/images/placeholders/starters.png",
     isAvailable: true
   },
   {
@@ -41,7 +41,7 @@ const dummyMenuItems = [
     description: "Creamy black lentils slow-cooked overnight",
     price: 240,
     category: "Main Course",
-    image: "https://res.cloudinary.com/demo/image/upload/dal-makhani.jpg",
+    image: "/images/placeholders/main-course.png",
     isAvailable: true
   },
   {
@@ -49,7 +49,7 @@ const dummyMenuItems = [
     description: "Deep-fried milk solids soaked in sugar syrup",
     price: 120,
     category: "Desserts",
-    image: "https://res.cloudinary.com/demo/image/upload/gulab-jamun.jpg",
+    image: "/images/placeholders/desserts.png",
     isAvailable: true
   },
   {
@@ -57,7 +57,7 @@ const dummyMenuItems = [
     description: "Crispy rice crepe filled with spiced potatoes",
     price: 180,
     category: "Breakfast",
-    image: "https://res.cloudinary.com/demo/image/upload/masala-dosa.jpg",
+    image: "/images/placeholders/breakfast.png",
     isAvailable: true
   },
   {
@@ -65,7 +65,7 @@ const dummyMenuItems = [
     description: "Fragrant rice layered with spiced chicken and aromatics",
     price: 340,
     category: "Main Course",
-    image: "https://res.cloudinary.com/demo/image/upload/biryani.jpg",
+    image: "/images/placeholders/main-course.png",
     isAvailable: true
   },
   {
@@ -73,7 +73,7 @@ const dummyMenuItems = [
     description: "Refreshing yogurt drink blended with sweet mangoes",
     price: 120,
     category: "Beverages",
-    image: "https://res.cloudinary.com/demo/image/upload/mango-lassi.jpg",
+    image: "/images/placeholders/beverages.png",
     isAvailable: true
   },
   {
@@ -81,21 +81,19 @@ const dummyMenuItems = [
     description: "Tandoor-baked flatbread topped with garlic and butter",
     price: 60,
     category: "Breads",
-    image: "https://res.cloudinary.com/demo/image/upload/naan.jpg",
+    image: "/images/placeholders/breads.png",
     isAvailable: true
   }
 ];
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'http://localhost:3000';
 
 async function addDummyMenuItems() {
-  console.log('Starting to add dummy menu items...');
   let successCount = 0;
   let failureCount = 0;
 
   for (const item of dummyMenuItems) {
     try {
-      const response = await fetch(`${baseUrl}/api/menu`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -106,21 +104,14 @@ async function addDummyMenuItems() {
       const data = await response.json();
 
       if (data.success) {
-        console.log(`Successfully added menu item: ${item.name}`);
         successCount++;
       } else {
-        console.error(`Failed to add menu item ${item.name}: ${data.message}`);
         failureCount++;
       }
     } catch (error) {
-      console.error(`Error adding menu item ${item.name}:`, error);
       failureCount++;
     }
   }
-
-  console.log(`\nSummary:`);
-  console.log(`Successfully added: ${successCount} items`);
-  console.log(`Failed to add: ${failureCount} items`);
 }
 
-addDummyMenuItems().catch(console.error); 
+addDummyMenuItems();

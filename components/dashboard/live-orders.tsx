@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ShoppingBag, Clock, CheckCircle, XCircle } from "lucide-react";
+import { ShoppingBag } from "lucide-react";
 import { useSocket, Order as SocketOrder, OrderStatus } from "@/contexts/SocketContext";
 
 type PaymentStatus = "paid" | "pending" | "failed";
@@ -14,13 +14,11 @@ interface Order extends SocketOrder {
 
 export function LiveOrders() {
   const [orders, setOrders] = useState<Order[]>([]);
-  const { socket, isConnected, liveOrders } = useSocket();
+  const { socket, isConnected, orders: liveOrders } = useSocket();
   
   useEffect(() => {
     if (liveOrders.length > 0) {
-      // Convert socket orders to our local orders with payment status
-      const updatedOrders = liveOrders.map(order => {
-        // Explicitly type the payment status
+      const updatedOrders = liveOrders.map((order: SocketOrder) => {
         const paymentStatus: PaymentStatus = Math.random() > 0.3 ? "paid" : "pending";
         
         return {
@@ -33,10 +31,8 @@ export function LiveOrders() {
     }
   }, [liveOrders]);
   
-  // Join restaurant room when socket connects
   useEffect(() => {
     if (socket && isConnected) {
-      // Use a dummy restaurant ID for demo purposes
       socket.emit("join-restaurant", "restaurant-123");
     }
   }, [socket, isConnected]);
@@ -139,4 +135,4 @@ export function LiveOrders() {
       </CardContent>
     </Card>
   );
-} 
+}

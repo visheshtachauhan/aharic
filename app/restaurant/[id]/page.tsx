@@ -1,8 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { motion } from "framer-motion"
-import { Card } from "@/components/ui/card"
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area"
 import { RestaurantHeader } from "@/components/restaurant/header"
 import { CategoryFilter } from "@/components/restaurant/category-filter"

@@ -2,7 +2,7 @@
 
 import Image from "next/image"
 import { motion } from "framer-motion"
-import { StarIcon, ClockIcon, ShareIcon, HeartIcon } from "@radix-ui/react-icons"
+import { StarIcon, ClockIcon, ArrowRightIcon, HeartIcon } from "@radix-ui/react-icons"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 
@@ -33,7 +33,7 @@ export function RestaurantHeader() {
             <h1 className="text-3xl font-bold">Restaurant Name</h1>
             <div className="flex gap-2">
               <Button size="icon" variant="secondary" className="rounded-full">
-                <ShareIcon className="h-4 w-4" />
+                <ArrowRightIcon className="h-4 w-4" />
               </Button>
               <Button size="icon" variant="secondary" className="rounded-full">
                 <HeartIcon className="h-4 w-4" />

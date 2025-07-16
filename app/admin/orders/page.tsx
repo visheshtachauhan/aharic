@@ -4,12 +4,20 @@ import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingBag, Search, ChevronDown, Clock, Plus } from 'lucide-react';
+import { ShoppingBag, Search, Clock, Plus } from 'lucide-react';
 import { useOrders } from '@/hooks/useOrders';
 import { useNotifications } from '@/components/ui/notification';
 import { format, isValid } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
+import { Order } from '@/types';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type SortOption = 'newest' | 'oldest' | 'highest' | 'lowest';
 type FilterOption = 'all' | 'pending' | 'in-progress' | 'completed';
@@ -32,6 +40,7 @@ interface Order {
   paymentMethod: 'cash' | 'card' | 'upi';
   createdAt: string;
   updatedAt: string;
+  customerName?: string;
 }
 
 export default function OrdersPage() {
@@ -44,10 +53,6 @@ export default function OrdersPage() {
   const { updateOrder } = useOrders();
   const { addNotification } = useNotifications();
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
-
   const fetchOrders = async () => {
     try {
       const response = await fetch('/api/orders');
@@ -58,13 +63,17 @@ export default function OrdersPage() {
       } else {
         toast.error(data.message || 'Failed to fetch orders');
       }
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error fetching orders:', error);
       toast.error('Failed to fetch orders');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    void fetchOrders();
+  }, []);
 
   // Format date safely
   const formatDate = (dateString: string) => {
@@ -79,7 +88,7 @@ export default function OrdersPage() {
   // Filter orders based on search query and status
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.table.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order._id.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (order.customerName && order.customerName.toLowerCase().includes(searchQuery.toLowerCase()));
 
     if (filterBy === 'all') return matchesSearch;
@@ -101,7 +110,7 @@ export default function OrdersPage() {
   });
 
   // If showing all orders, sort by status priority (pending -> in-progress -> completed)
-  const finalOrders = filterBy === 'all' 
+  const finalOrders = filterBy === 'all'
     ? [
         ...sortedOrders.filter(o => o.status === 'pending'),
         ...sortedOrders.filter(o => o.status === 'in-progress'),
@@ -117,7 +126,7 @@ export default function OrdersPage() {
         message: `Order status changed to ${newStatus}`,
         type: 'success'
       });
-    } catch (error) {
+    } catch (error: unknown) {
       addNotification({
         title: 'Error',
         message: 'Failed to update order status',
@@ -134,25 +143,12 @@ export default function OrdersPage() {
         message: `Payment marked as ${newPaymentStatus}`,
         type: 'success'
       });
-    } catch (error) {
+    } catch (error: unknown) {
       addNotification({
         title: 'Error',
         message: 'Failed to update payment status',
         type: 'error'
       });
-    }
-  };
-
-  const getStatusBadgeColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-[#FFF8E6] text-[#FFB800]';
-      case 'in-progress':
-        return 'bg-[#FFF0E6] text-[#FF7300]';
-      case 'completed':
-        return 'bg-green-50 text-green-600';
-      default:
-        return 'bg-gray-100 text-gray-600';
     }
   };
 
@@ -242,84 +238,58 @@ export default function OrdersPage() {
         <div className="flex items-center gap-4 mb-4">
           <div className="flex-1 relative">
             <Search className="w-5 h-5 absolute left-3 top-1/2 transform -translate-y-1/2 text-[#666666]" />
-            <Input 
-              placeholder="Search orders by table or customer..." 
+            <Input
+              placeholder="Search orders by table or customer..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12 rounded-xl border-[#FF7300]/20 focus:border-[#FF7300] focus:ring-[#FF7300]/20"
             />
           </div>
-          <Button 
-            variant="outline" 
-            className="border-[#FF7300] text-[#FF7300] hover:bg-[#FF7300] hover:text-white"
-            onClick={() => setSortBy(sortBy === 'newest' ? 'oldest' : 'newest')}
-          >
-            Sort by {sortBy}
-            <ChevronDown className="w-4 h-4 ml-2" />
-          </Button>
-        </div>
-
-        {/* Filter Buttons */}
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setFilterBy('all')}
-            className={`rounded-full ${
-              filterBy === 'all'
-                ? 'bg-[#FF7300] text-white'
-                : 'border-[#FF7300] text-[#FF7300] hover:bg-[#FF7300] hover:text-white'
-            }`}
-          >
-            All Orders
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setFilterBy('pending')}
-            className={`rounded-full ${
-              filterBy === 'pending'
-                ? 'bg-[#FFB800] text-white'
-                : 'border-[#FFB800] text-[#FFB800] hover:bg-[#FFB800] hover:text-white'
-            }`}
-          >
-            Pending
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setFilterBy('in-progress')}
-            className={`rounded-full ${
-              filterBy === 'in-progress'
-                ? 'bg-[#FF7300] text-white'
-                : 'border-[#FF7300] text-[#FF7300] hover:bg-[#FF7300] hover:text-white'
-            }`}
-          >
-            In Progress
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setFilterBy('completed')}
-            className={`rounded-full ${
-              filterBy === 'completed'
-                ? 'bg-green-600 text-white'
-                : 'border-green-600 text-green-600 hover:bg-green-600 hover:text-white'
-            }`}
-          >
-            Completed
-          </Button>
+          <div className="flex items-center gap-4">
+            <div>
+              <label className="text-sm font-medium text-gray-500">Sort by</label>
+              <Select value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">Newest</SelectItem>
+                  <SelectItem value="oldest">Oldest</SelectItem>
+                  <SelectItem value="highest">Highest Amount</SelectItem>
+                  <SelectItem value="lowest">Lowest Amount</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">Filter by</label>
+              <Select value={filterBy} onValueChange={(value) => setFilterBy(value as FilterOption)}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Filter by" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="pending">Pending</SelectItem>
+                  <SelectItem value="in-progress">In Progress</SelectItem>
+                  <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
         </div>
       </div>
+
 
       {/* Orders List */}
       <div className="space-y-4">
         {finalOrders.map((order) => (
-          <Card key={order._id} className="p-6">
+          <Card
+            key={order._id}
+            className="bg-white rounded-xl p-6 transition-all duration-300 hover:shadow-lg"
+          >
             <div className="flex justify-between items-start mb-4">
               <div>
                 <h3 className="text-lg font-semibold text-[#2D2D2D]">
-                  {order.table}
+                  Table {order.table}
                 </h3>
                 <div className="flex items-center gap-2 mt-1">
                   <Clock className="w-4 h-4 text-[#666666]" />
@@ -333,9 +303,6 @@ export default function OrdersPage() {
                 <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                   {order.status}
                 </span>
-                <span className={`inline-flex px-3 py-1 rounded-full text-xs font-medium ${getPaymentStatusColor(order.paymentStatus)}`}>
-                  {order.paymentStatus}
-                </span>
               </div>
             </div>
 
@@ -348,54 +315,37 @@ export default function OrdersPage() {
               ))}
             </div>
 
-            {order.specialInstructions && (
-              <div className="mb-4 p-3 bg-[#FFF6F0] rounded-lg">
-                <p className="text-sm text-[#666666]">
-                  <span className="font-medium">Special Instructions:</span> {order.specialInstructions}
-                </p>
-              </div>
-            )}
-
             <div className="flex items-center justify-between pt-3 border-t border-[#FF7300]/10">
               <div className="flex items-center gap-2">
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handlePaymentUpdate(order._id, order.paymentStatus === 'pending' ? 'paid' : 'pending')}
-                  className={`rounded-full ${
-                    order.paymentStatus === 'paid'
-                      ? 'bg-green-50 text-green-600 border-green-200'
-                      : 'bg-yellow-50 text-yellow-600 border-yellow-200'
+                  onClick={() => handlePaymentUpdate(order._id, 'paid')}
+                  disabled={order.paymentStatus === 'paid'}
+                  className={`px-3 py-1 text-xs rounded-full ${
+                    order.paymentStatus === 'paid' ? 'bg-green-600 text-white' : 'bg-yellow-500 text-white'
                   }`}
                 >
                   {order.paymentStatus === 'paid' ? 'Paid' : 'Mark as Paid'}
                 </Button>
+                <span className={`text-xs ${getPaymentStatusColor(order.paymentStatus)}`}>
+                  ({order.paymentMethod})
+                </span>
               </div>
-              <div className="flex gap-2">
-                {order.status !== 'completed' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleStatusUpdate(order._id, getNextStatus(order.status))}
-                    className="rounded-full border-[#FF7300] text-[#FF7300] hover:bg-[#FF7300] hover:text-white"
-                  >
-                    {order.status === 'pending' ? 'Start Preparing' : 'Mark Complete'}
-                  </Button>
-                )}
-                {order.status !== 'cancelled' && (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleStatusUpdate(order._id, 'cancelled')}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    Cancel
-                  </Button>
-                )}
-              </div>
+              <Button
+                onClick={() => handleStatusUpdate(order._id, getNextStatus(order.status))}
+                disabled={order.status === 'completed'}
+                className="bg-blue-500 text-white hover:bg-blue-600"
+              >
+                Next: {getNextStatus(order.status)}
+              </Button>
             </div>
           </Card>
         ))}
+
+        {finalOrders.length === 0 && (
+          <div className="text-center py-8 text-[#666666]">
+            No orders found for the current filter.
+          </div>
+        )}
       </div>
     </div>
   );

@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Star, Clock, MapPin, Phone, Share2, Heart, Table } from 'lucide-react';
 
 // Mock data - replace with API calls later
@@ -55,7 +54,7 @@ interface PageProps {
 
 export default function TableMenuPage({ params }: PageProps) {
   const [selectedCategory, setSelectedCategory] = useState('All');
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
   const filteredMenuItems = selectedCategory === 'All'

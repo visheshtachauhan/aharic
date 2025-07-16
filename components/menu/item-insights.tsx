@@ -22,7 +22,7 @@ interface ItemStats {
 
 export function ItemInsights({ itemId, className, children }: ItemInsightsProps) {
   // In a real app, this would be fetched from your API
-  const getItemStats = (id: string): ItemStats => {
+  const getItemStats = (_id: string): ItemStats => {
     // Dummy data - replace with actual API call
     return {
       weeklySales: Math.floor(Math.random() * 300),
@@ -87,4 +87,4 @@ export function ItemInsights({ itemId, className, children }: ItemInsightsProps)
       </HoverCardContent>
     </HoverCard>
   )
-} 
+}

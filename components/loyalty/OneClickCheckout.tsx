@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNotifications } from '@/components/ui/notification';
@@ -29,17 +29,22 @@ export function OneClickCheckout({
   const [savedMethods, setSavedMethods] = useState<SavedPaymentMethod[]>([]);
   const { addNotification } = useNotifications();
 
-  const fetchSavedPaymentMethods = async () => {
-    try {
-      const response = await fetch(`/api/restaurant/loyalty/customers?phone=${phoneNumber}`);
-      const data = await response.json();
-      if (data.success && data.customerData?.savedPaymentMethods) {
-        setSavedMethods(data.customerData.savedPaymentMethods);
+  useEffect(() => {
+    const fetchSavedPaymentMethods = async () => {
+      try {
+        const response = await fetch(`/api/restaurant/loyalty/customers?phone=${phoneNumber}`);
+        const data = await response.json();
+        if (data.success && data.customerData?.savedPaymentMethods) {
+          setSavedMethods(data.customerData.savedPaymentMethods);
+        }
+      } catch (error) {
+        console.error('Failed to fetch payment methods:', error);
       }
-    } catch (error) {
-      console.error('Failed to fetch payment methods:', error);
+    };
+    if (phoneNumber) {
+      fetchSavedPaymentMethods();
     }
-  };
+  }, [phoneNumber]);
 
   const handleQuickCheckout = async (method: SavedPaymentMethod) => {
     setLoading(true);
@@ -129,4 +134,4 @@ export function OneClickCheckout({
       )}
     </AnimatePresence>
   );
-} 
+}

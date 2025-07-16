@@ -1,39 +1,34 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { 
-  Plus, 
-  Search, 
-  Filter, 
-  Edit, 
-  Trash2, 
+import {
+  Plus,
+  Edit,
+  Trash2,
   Table as TableIcon,
   Grid,
   List,
   Users,
   Clock,
-  CheckCircle,
-  AlertCircle
 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { 
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
   DialogFooter,
-  DialogClose,
   DialogDescription
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Switch } from "@/components/ui/switch";
-import { toast } from "@/components/ui/use-toast";
+import { toast } from "sonner";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 interface TableItem {
   _id: string;
@@ -50,37 +45,10 @@ interface TableItem {
   updatedAt: string;
 }
 
-// Add AvailableTableNumbers component
-const AvailableTableNumbers = ({ tables }: { tables: TableItem[] }) => {
-  const availableTables = tables
-    .filter(table => table.status === "available")
-    .sort((a, b) => parseInt(a.number) - parseInt(b.number));
-
-  return (
-    <div className="mb-4">
-      <h3 className="text-sm font-medium mb-2">Available Tables</h3>
-      <div className="flex flex-wrap gap-2">
-        {availableTables.map((table) => (
-          <Badge
-            key={table._id}
-            variant="outline"
-            className="bg-green-50 text-green-700 border-green-200 text-xs"
-          >
-            {table.number}
-          </Badge>
-        ))}
-        {availableTables.length === 0 && (
-          <span className="text-sm text-muted-foreground">No tables available</span>
-        )}
-      </div>
-    </div>
-  );
-};
-
 export function TableManagement() {
   const [tables, setTables] = useState<TableItem[]>([]);
   const [filteredTables, setFilteredTables] = useState<TableItem[]>([]);
-  const [currentView, setCurrentView] = useState<"all" | "available" | "occupied" | "reserved">("all");
+  const [currentView] = useState<"all" | "available" | "occupied" | "reserved">("all");
   const [currentSection, setCurrentSection] = useState("All");
   const [editingTable, setEditingTable] = useState<TableItem | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -103,15 +71,7 @@ export function TableManagement() {
     notes: ""
   });
 
-  useEffect(() => {
-    fetchTables();
-  }, []);
-
-  useEffect(() => {
-    filterTables();
-  }, [tables, currentView, currentSection, searchQuery]);
-
-  const fetchTables = async () => {
+  const fetchTables = useCallback(async () => {
     try {
       setIsLoading(true);
       const response = await fetch('/api/admin/tables');
@@ -126,17 +86,13 @@ export function TableManagement() {
       }
     } catch (error) {
       console.error('Error fetching tables:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to fetch tables',
-        variant: "destructive"
-      });
+      toast.error('Failed to fetch tables');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
-  const filterTables = () => {
+  const filterTables = useCallback(() => {
     let filtered = [...tables];
 
     // Apply view filter
@@ -152,7 +108,7 @@ export function TableManagement() {
     // Apply search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(table => 
+      filtered = filtered.filter(table =>
         table.number.toLowerCase().includes(query) ||
         table.location?.section?.toLowerCase().includes(query) ||
         table.location?.floor?.toLowerCase().includes(query) ||
@@ -161,7 +117,15 @@ export function TableManagement() {
     }
 
     setFilteredTables(filtered);
-  };
+  }, [tables, currentView, currentSection, searchQuery]);
+
+  useEffect(() => {
+    fetchTables();
+  }, [fetchTables]);
+
+  useEffect(() => {
+    filterTables();
+  }, [filterTables]);
 
   const handleAdd = async () => {
     try {
@@ -192,20 +156,13 @@ export function TableManagement() {
           },
           notes: ""
         });
-        toast({
-          title: "Success",
-          description: "Table added successfully",
-        });
+        toast.success("Table added successfully");
       } else {
         throw new Error(data.message || 'Failed to add table');
       }
     } catch (error) {
       console.error('Error adding table:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to add table',
-        variant: "destructive"
-      });
+      toast.error('Failed to add table');
     }
   };
 
@@ -232,25 +189,18 @@ export function TableManagement() {
 
       const data = await response.json();
       if (data.success) {
-        setTables(tables.map(table => 
+        setTables(tables.map(table =>
           table._id === editingTable._id ? data.table : table
         ));
         setEditingTable(null);
         setIsDialogOpen(false);
-        toast({
-          title: "Success",
-          description: "Table updated successfully",
-        });
+        toast.success("Table updated successfully");
       } else {
         throw new Error(data.message || 'Failed to update table');
       }
     } catch (error) {
       console.error('Error updating table:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to update table',
-        variant: "destructive"
-      });
+      toast.error("Failed to update table.");
     }
   };
 
@@ -267,343 +217,245 @@ export function TableManagement() {
       const data = await response.json();
       if (data.success) {
         setTables(tables.filter(table => table._id !== id));
-        toast({
-          title: "Success",
-          description: "Table deleted successfully",
-        });
+        toast.success("Table deleted successfully");
       } else {
         throw new Error(data.message || 'Failed to delete table');
       }
     } catch (error) {
       console.error('Error deleting table:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : 'Failed to delete table',
-        variant: "destructive"
-      });
+      toast.error("Failed to delete table.");
     }
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      available: { color: "bg-green-100 text-green-800", icon: CheckCircle },
-      occupied: { color: "bg-red-100 text-red-800", icon: Users },
-      reserved: { color: "bg-yellow-100 text-yellow-800", icon: Clock },
-      maintenance: { color: "bg-gray-100 text-gray-800", icon: AlertCircle }
-    };
-
-    const config = statusConfig[status as keyof typeof statusConfig];
-    if (!config) return null;
-
-    const Icon = config.icon;
-    return (
-      <Badge variant="secondary" className={config.color}>
-        <Icon className="w-3 h-3 mr-1" />
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
+    switch (status) {
+      case 'available':
+        return <Badge className="bg-green-100 text-green-800 hover:bg-green-100">Available</Badge>;
+      case 'occupied':
+        return <Badge className="bg-red-100 text-red-800 hover:bg-red-100">Occupied</Badge>;
+      case 'reserved':
+        return <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">Reserved</Badge>;
+      case 'maintenance':
+        return <Badge className="bg-gray-100 text-gray-800 hover:bg-gray-100">Maintenance</Badge>;
+      default:
+        return <Badge>{status}</Badge>;
+    }
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-center">
-        <div className="flex gap-2">
-          <Tabs value={currentView} onValueChange={(value) => setCurrentView(value as any)}>
-            <TabsList>
-              <TabsTrigger value="all">All Tables</TabsTrigger>
-              <TabsTrigger value="available">Available</TabsTrigger>
-              <TabsTrigger value="occupied">Occupied</TabsTrigger>
-              <TabsTrigger value="reserved">Reserved</TabsTrigger>
-            </TabsList>
-          </Tabs>
-          
+  const TableCard = ({ table }: { table: TableItem }) => (
+    <Card
+      className={`overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 ${
+        table.status === 'occupied' ? 'bg-red-50' :
+        table.status === 'reserved' ? 'bg-yellow-50' : 'bg-white'
+      }`}
+    >
+      <CardContent className="p-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <div className="flex items-center gap-2">
+              <TableIcon className="w-5 h-5 text-gray-500" />
+              <h3 className="font-bold text-lg">{table.number}</h3>
+            </div>
+            <p className="text-sm text-gray-500">{table.location?.section}</p>
+          </div>
+          {getStatusBadge(table.status)}
+        </div>
+        <div className="mt-4 space-y-2 text-sm text-gray-600">
           <div className="flex items-center gap-2">
-            <span className="text-sm">Section:</span>
-            <select
-              className="rounded-md border border-input bg-background px-3 py-1 text-sm"
-              value={currentSection}
-              onChange={(e) => setCurrentSection(e.target.value)}
-            >
-              {sections.map((section) => (
-                <option key={section} value={section}>
-                  {section}
-                </option>
-              ))}
-            </select>
+            <Users className="w-4 h-4" />
+            <span>Capacity: {table.capacity}</span>
           </div>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search tables..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8"
-            />
-          </div>
-          
           <div className="flex items-center gap-2">
-            <Button
-              variant={viewMode === 'grid' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('grid')}
-            >
-              <Grid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === 'list' ? 'default' : 'ghost'}
-              size="sm"
-              onClick={() => setViewMode('list')}
-            >
-              <List className="h-4 w-4" />
-            </Button>
+            <Clock className="w-4 h-4" />
+            <span>Updated: {new Date(table.updatedAt).toLocaleDateString()}</span>
           </div>
-          
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Table
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>{editingTable ? "Edit Table" : "Add New Table"}</DialogTitle>
-                <DialogDescription>
-                  {editingTable 
-                    ? "Update table information and status." 
-                    : "Create a new table for your restaurant."}
-                </DialogDescription>
-              </DialogHeader>
-              
-              <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="number">Table Number</Label>
-                    <Input
-                      id="number"
-                      placeholder="1"
-                      value={editingTable ? editingTable.number : newTable.number}
-                      onChange={(e) => editingTable
-                        ? setEditingTable({...editingTable, number: e.target.value})
-                        : setNewTable({...newTable, number: e.target.value})
-                      }
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="capacity">Capacity</Label>
-                    <Input
-                      id="capacity"
-                      type="number"
-                      min="1"
-                      max="20"
-                      placeholder="4"
-                      value={editingTable ? editingTable.capacity : newTable.capacity}
-                      onChange={(e) => {
-                        const value = parseInt(e.target.value) || 1;
-                        editingTable
-                          ? setEditingTable({...editingTable, capacity: value})
-                          : setNewTable({...newTable, capacity: value});
-                      }}
-                    />
-                  </div>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="section">Section</Label>
-                  <select
-                    id="section"
-                    className="w-full rounded-md border border-input bg-background px-3 py-2"
-                    value={editingTable ? editingTable.location?.section : newTable.location?.section}
-                    onChange={(e) => editingTable
-                      ? setEditingTable({
-                          ...editingTable,
-                          location: { ...editingTable.location, section: e.target.value }
-                        })
-                      : setNewTable({
-                          ...newTable,
-                          location: { ...newTable.location, section: e.target.value }
-                        })
-                    }
-                  >
-                    {sections.filter(s => s !== "All").map((section) => (
-                      <option key={section} value={section}>
-                        {section}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="description">Description (Optional)</Label>
-                  <Textarea
-                    id="description"
-                    placeholder="Special features or location details"
-                    value={editingTable ? editingTable.location?.description : newTable.location?.description}
-                    onChange={(e) => editingTable
-                      ? setEditingTable({
-                          ...editingTable,
-                          location: { ...editingTable.location, description: e.target.value }
-                        })
-                      : setNewTable({
-                          ...newTable,
-                          location: { ...newTable.location, description: e.target.value }
-                        })
-                    }
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="notes">Notes (Optional)</Label>
-                  <Textarea
-                    id="notes"
-                    placeholder="Additional notes about the table"
-                    value={editingTable ? editingTable.notes : newTable.notes}
-                    onChange={(e) => editingTable
-                      ? setEditingTable({...editingTable, notes: e.target.value})
-                      : setNewTable({...newTable, notes: e.target.value})
-                    }
-                  />
-                </div>
-              </div>
-              
-              <DialogFooter>
-                <Button
-                  type="submit"
-                  onClick={editingTable ? handleSave : handleAdd}
-                  disabled={
-                    (editingTable ? !editingTable.number : !newTable.number) ||
-                    (editingTable ? !editingTable.capacity : !newTable.capacity)
-                  }
-                >
-                  {editingTable ? "Save Changes" : "Add Table"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
         </div>
-      </div>
+        <div className="mt-4 flex gap-2">
+          <Button size="sm" variant="outline" className="w-full" onClick={() => handleEdit(table)}>
+            <Edit className="w-4 h-4 mr-2" /> Edit
+          </Button>
+          <Button size="sm" variant="destructive-outline" className="w-full" onClick={() => handleDelete(table._id)}>
+            <Trash2 className="w-4 h-4 mr-2" /> Delete
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
 
-      {filteredTables.length === 0 ? (
-        <div className="text-center py-12">
-          <TableIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-20" />
-          <p className="text-muted-foreground">No tables found.</p>
+  const TableRowComponent = ({ table }: { table: TableItem }) => (
+    <TableRow key={table._id}>
+      <TableCell>{table.number}</TableCell>
+      <TableCell>{table.capacity}</TableCell>
+      <TableCell>{getStatusBadge(table.status)}</TableCell>
+      <TableCell>{table.location?.section}</TableCell>
+      <TableCell>{new Date(table.updatedAt).toLocaleDateString()}</TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Button variant="ghost" size="icon" onClick={() => handleEdit(table)}>
+            <Edit className="h-4 w-4" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => handleDelete(table._id)}>
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
-      ) : viewMode === "grid" ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {filteredTables.map(table => (
-            <Card key={table._id} className="overflow-hidden">
-              <CardHeader className="pb-2">
-                <div className="flex justify-between items-start">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    Table {table.number}
-                    <span className="text-sm font-normal text-muted-foreground">
-                      ({table.capacity} {table.capacity === 1 ? "seat" : "seats"})
-                    </span>
-                  </CardTitle>
-                  {getStatusBadge(table.status)}
-                </div>
-                <CardDescription>{table.location?.section}</CardDescription>
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                {table.location?.description && (
-                  <p className="text-sm text-muted-foreground">
-                    {table.location.description}
-                  </p>
-                )}
-                
-                {table.notes && (
-                  <div className="text-sm bg-muted/50 p-2 rounded-md">
-                    <p className="font-medium mb-1">Notes:</p>
-                    <p className="text-muted-foreground">{table.notes}</p>
-                  </div>
-                )}
-                
-                <div className="flex justify-end gap-2 pt-2 border-t">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleEdit(table)}
-                  >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={() => handleDelete(table._id)}
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+      </TableCell>
+    </TableRow>
+  );
+
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+          {[...Array(10)].map((_, i) => (
+            <Card key={i} className="animate-pulse">
+              <CardContent className="p-4">
+                <div className="h-6 bg-gray-200 rounded w-1/4 mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-1/2 mb-4"></div>
+                <div className="h-4 bg-gray-200 rounded w-full mb-2"></div>
+                <div className="h-4 bg-gray-200 rounded w-full"></div>
+                <div className="flex justify-end gap-2 mt-4">
+                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
+                  <div className="h-8 bg-gray-200 rounded w-1/2"></div>
                 </div>
               </CardContent>
             </Card>
           ))}
         </div>
-      ) : (
-        <div className="border rounded-md overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-muted/50">
-                <th className="text-left p-3 font-medium">Table</th>
-                <th className="text-left p-3 font-medium">Capacity</th>
-                <th className="text-left p-3 font-medium">Section</th>
-                <th className="text-left p-3 font-medium">Status</th>
-                <th className="text-left p-3 font-medium">Last Updated</th>
-                <th className="text-right p-3 font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredTables.map((table, index) => (
-                <tr key={table._id} className={index % 2 === 0 ? "bg-background" : "bg-muted/20"}>
-                  <td className="p-3 font-medium">{table.number}</td>
-                  <td className="p-3">{table.capacity}</td>
-                  <td className="p-3">{table.location?.section}</td>
-                  <td className="p-3">
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(table.status)}
-                    </div>
-                  </td>
-                  <td className="p-3">
-                    <span className="text-xs text-muted-foreground">
-                      {new Date(table.updatedAt).toLocaleString()}
-                    </span>
-                  </td>
-                  <td className="p-3">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleEdit(table)}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => handleDelete(table._id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
+      );
+    }
+    
+    if (viewMode === 'list') {
+      return (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Number</TableHead>
+              <TableHead>Capacity</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>Section</TableHead>
+              <TableHead>Last Updated</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filteredTables.map(table => (
+              <TableRowComponent key={table._id} table={table} />
+            ))}
+          </TableBody>
+        </Table>
+      )
+    }
+
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+        {filteredTables.map(table => (
+          <TableCard key={table._id} table={table} />
+        ))}
+      </div>
+    );
+  };
+
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    if (name.startsWith("location.")) {
+      const field = name.split(".")[1];
+      if (editingTable) {
+        setEditingTable({
+          ...editingTable,
+          location: { ...editingTable.location, [field]: value }
+        });
+      } else {
+        setNewTable({
+          ...newTable,
+          location: { ...newTable.location, [field]: value }
+        });
+      }
+    } else {
+      if (editingTable) {
+        setEditingTable({ ...editingTable, [name]: value });
+      } else {
+        setNewTable({ ...newTable, [name]: value });
+      }
+    }
+  };
+
+  return (
+    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Table Management</CardTitle>
+          <CardDescription>
+            View, add, edit, and manage your restaurant's tables.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex-1 max-w-sm">
+              <Input
+                placeholder="Search tables by number, section, etc."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            </div>
+            <div className="flex items-center gap-2">
+              <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as "grid" | "list")}>
+                <TabsList>
+                  <TabsTrigger value="grid"><Grid className="h-4 w-4" /></TabsTrigger>
+                  <TabsTrigger value="list"><List className="h-4 w-4" /></TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <DialogTrigger asChild>
+                <Button onClick={() => setEditingTable(null)}>
+                  <Plus className="mr-2 h-4 w-4" /> Add Table
+                </Button>
+              </DialogTrigger>
+            </div>
+          </div>
+
+          <Tabs value={currentSection} onValueChange={setCurrentSection} className="mb-4">
+            <TabsList>
+              {sections.map(section => (
+                <TabsTrigger key={section} value={section}>{section}</TabsTrigger>
               ))}
-            </tbody>
-          </table>
+            </TabsList>
+          </Tabs>
+
+          {renderContent()}
+        </CardContent>
+      </Card>
+
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{editingTable ? "Edit Table" : "Add New Table"}</DialogTitle>
+          <DialogDescription>
+            {editingTable ? "Update the details of this table." : "Fill in the details for the new table."}
+          </DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-4 py-4">
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="number" className="text-right">Number</Label>
+            <Input id="number" name="number" value={editingTable?.number || newTable.number} onChange={handleFormChange} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="capacity" className="text-right">Capacity</Label>
+            <Input id="capacity" name="capacity" type="number" value={editingTable?.capacity || newTable.capacity} onChange={handleFormChange} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="location.section" className="text-right">Section</Label>
+            <Input id="location.section" name="location.section" value={editingTable?.location?.section || newTable.location?.section} onChange={handleFormChange} className="col-span-3" />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="notes" className="text-right">Notes</Label>
+            <Textarea id="notes" name="notes" value={editingTable?.notes || newTable.notes} onChange={handleFormChange} className="col-span-3" />
+          </div>
         </div>
-      )}
-    </div>
+        <DialogFooter>
+          <Button onClick={editingTable ? handleSave : handleAdd}>
+            {editingTable ? "Save Changes" : "Add Table"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
-} 
+}

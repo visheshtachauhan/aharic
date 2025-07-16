@@ -55,7 +55,7 @@ const restaurantSchema = new mongoose.Schema({
     },
   }],
   menuItems: [{
-    _id: {
+    id: {
       type: mongoose.Schema.Types.ObjectId,
       auto: true,
     },
