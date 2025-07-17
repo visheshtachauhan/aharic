@@ -107,6 +107,20 @@ const nextConfig = {
     optimizeCss: true, // Enable CSS optimization
     optimizePackageImports: ['@radix-ui/react-icons', 'lucide-react'], // Optimize specific package imports
   },
+  async redirects() {
+    return [
+      { source: '/login', destination: '/auth/login', permanent: true },
+      { source: '/signup', destination: '/auth/signup', permanent: true },
+      { source: '/forgot-password', destination: '/auth/forgot-password', permanent: true },
+      { source: '/reset-password', destination: '/auth/reset-password', permanent: true },
+      { source: '/admin/dashboard', destination: '/owner/dashboard', permanent: true },
+      { source: '/admin/orders', destination: '/owner/orders', permanent: true },
+      { source: '/admin/menu', destination: '/owner/menu', permanent: true },
+      { source: '/admin/tables', destination: '/owner/tables', permanent: true },
+      { source: '/admin/settings', destination: '/owner/settings', permanent: true },
+      { source: '/', destination: '/intro', permanent: false },
+    ];
+  },
 };
 
 module.exports = nextConfig; 
