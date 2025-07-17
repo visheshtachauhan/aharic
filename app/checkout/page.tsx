@@ -5,7 +5,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useNotifications } from '@/components/ui/notification';
 import { motion } from 'framer-motion';
-import { PhoneVerification } from '@/components/loyalty/PhoneVerification';
+// import { PhoneVerification } from '@/components/loyalty/PhoneVerification';
 import { RewardsDisplay } from '@/components/loyalty/RewardsDisplay';
 import { OneClickCheckout } from '@/components/loyalty/OneClickCheckout';
 
@@ -248,12 +248,12 @@ export default function Checkout({ items = [], onCheckoutComplete }: CheckoutPro
       </div>
 
       {/* Phone Verification Dialog */}
-      <PhoneVerification
+      {/* <PhoneVerification
         isOpen={showPhoneVerification}
         onClose={() => setShowPhoneVerification(false)}
         onVerified={handlePhoneVerified}
         firstOrderDiscount={loyaltySettings?.firstOrderDiscount?.enabled ? loyaltySettings.firstOrderDiscount.amount : 0}
-      />
+      /> */}
     </div>
   );
 }
