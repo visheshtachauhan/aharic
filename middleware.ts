@@ -79,7 +79,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Define public routes that don't require authentication (normal mode)
+  // Define public routes in normal mode
   const publicRoutes = [
     '/',
     '/intro',
@@ -91,10 +91,10 @@ export async function middleware(request: NextRequest) {
     '/auth/login',
     '/auth/signup',
     '/auth/forgot-password',
-    '/auth/reset-password'
+    '/auth/reset-password',
+    '/auth/logout'
   ]
 
-  // Demo lockdown: when enabled, redirect public pages to login except auth
   const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN === 'true'
 
   const isPublicRoute = publicRoutes.some(route => {
@@ -104,14 +104,14 @@ export async function middleware(request: NextRequest) {
     return pathname === route || pathname.startsWith(route + '/')
   })
 
-  // Allow demo owner cookie as authenticated during demo
   const hasDemoOwner = request.cookies.get('demoOwner')?.value === '1'
   const isAuthenticated = Boolean(user) || (demoLockdown && hasDemoOwner)
 
   if (demoLockdown) {
-    // During demo, force all public pages to login except auth routes
+    // During demo, only allow auth pages and intro without login
     const isAuthRoute = pathname.startsWith('/auth')
-    if (!isAuthRoute && isPublicRoute && !isAuthenticated) {
+    const isIntro = pathname === '/intro' || pathname === '/'
+    if (!isAuthRoute && !isIntro && isPublicRoute && !isAuthenticated) {
       const url = request.nextUrl.clone()
       url.pathname = '/auth/login'
       return NextResponse.redirect(url)
@@ -144,13 +144,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     * Feel free to modify this pattern to include more paths.
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 } 
