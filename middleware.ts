@@ -88,14 +88,17 @@ export async function middleware(request: NextRequest) {
   const publicRoutes = ['/intro', '/auth/login', '/auth/signup']
   const isPublicRoute = publicRoutes.some((route) => pathname === route)
 
-  // Demo lockdown flag (kept for clarity, behavior already enforces strict public routes)
+  // Demo lockdown and demo cookie (treat as authenticated owner during demo)
   const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN === 'true'
+  const hasDemoOwner = demoLockdown && request.cookies.get('demoOwner')?.value === '1'
 
   // Authentication status
-  const isAuthenticated = Boolean(user)
+  const isAuthenticated = Boolean(user) || hasDemoOwner
 
   // Role helpers
-  const role: string | undefined = (user as any)?.user_metadata?.role || (user as any)?.app_metadata?.role
+  let role: string | undefined = (user as any)?.user_metadata?.role || (user as any)?.app_metadata?.role
+  if (!role && hasDemoOwner) role = 'owner'
+
   const isOwnerRoute = pathname.startsWith('/owner')
   const isSuperadminRoute = pathname.startsWith('/superadmin')
 
