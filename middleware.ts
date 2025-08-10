@@ -60,19 +60,66 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Allow access to auth-related pages and the landing page
-  if (
-    !user &&
-    !pathname.startsWith('/auth') &&
-    pathname !== '/' && 
-    pathname !== '/intro'
-  ) {
+  // Handle legacy route redirects
+  if (pathname === '/login') {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
-  } else if (user && (pathname.startsWith('/auth') || pathname === '/intro')) {
+  }
+
+  if (pathname === '/signup') {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/auth/signup'
+    return NextResponse.redirect(url)
+  }
+
+  if (pathname.startsWith('/admin')) {
+    const url = request.nextUrl.clone()
+    url.pathname = pathname.replace('/admin', '/owner')
+    return NextResponse.redirect(url)
+  }
+
+  // Define public routes that don't require authentication
+  const publicRoutes = [
+    '/',
+    '/intro',
+    '/menu',
+    '/restaurants',
+    '/restaurant',
+    '/checkout',
+    '/orders',
+    '/auth/login',
+    '/auth/signup',
+    '/auth/forgot-password',
+    '/auth/reset-password'
+  ]
+
+  // Check if current path is a public route
+  const isPublicRoute = publicRoutes.some(route => {
+    if (route === '/restaurant') {
+      return pathname.startsWith('/restaurant')
+    }
+    return pathname === route || pathname.startsWith(route + '/')
+  })
+
+  // If no user and trying to access protected route, redirect to login
+  if (!user && !isPublicRoute) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    return NextResponse.redirect(url)
+  }
+
+  // If user is logged in and trying to access auth pages, redirect to dashboard
+  if (user && pathname.startsWith('/auth')) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/owner/dashboard'
+    return NextResponse.redirect(url)
+  }
+
+  // If user is logged in and trying to access intro page, redirect to dashboard
+  if (user && pathname === '/intro') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/owner/dashboard'
     return NextResponse.redirect(url)
   }
 
