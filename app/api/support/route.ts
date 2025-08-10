@@ -1,4 +1,4 @@
-import { createRouteHandlerClient } from '@supabase/ssr';
+import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
@@ -11,9 +11,29 @@ const supportSchema = z.object({
   message: z.string().min(10, 'Message must be at least 10 characters long'),
 });
 
-export async function POST(request: NextRequest) {
+function getSupabase() {
   const cookieStore = cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        get(name: string) {
+          return cookieStore.get(name)?.value;
+        },
+        set(name: string, value: string, options) {
+          // Not setting here in route handlers
+        },
+        remove(name: string, options) {
+          // Not removing here in route handlers
+        },
+      },
+    }
+  );
+}
+
+export async function POST(request: NextRequest) {
+  const supabase = getSupabase();
 
   try {
     const json = await request.json();
@@ -51,19 +71,13 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  const cookieStore = cookies();
-  const supabase = createRouteHandlerClient({ cookies: () => cookieStore });
+  const supabase = getSupabase();
 
   // Check if the user is an admin before fetching all requests.
-  // This is a placeholder for actual role-based access control.
-  // In a real app, you would check a 'roles' table or a custom claim.
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
-
-  // For now, we assume any logged-in user can see this for simplicity.
-  // You should lock this down to an 'admin' role.
 
   try {
     const { data, error } = await supabase

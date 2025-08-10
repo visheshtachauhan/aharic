@@ -10,7 +10,6 @@ import { useNotifications } from '@/components/ui/notification';
 import { format, isValid } from 'date-fns';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Order } from '@/types';
 import {
   Select,
   SelectContent,
@@ -182,16 +181,16 @@ export default function OrdersPage() {
     }
   };
 
-  const getNextStatus = (currentStatus: Order['status']): Order['status'] => {
+  const getNextStatus = (currentStatus: Order['status']): 'pending' | 'in-progress' | 'completed' => {
     switch (currentStatus) {
       case 'pending':
         return 'in-progress';
       case 'in-progress':
         return 'completed';
       case 'completed':
-        return 'completed'; // No next status
+        return 'completed';
       case 'cancelled':
-        return 'cancelled'; // No next status
+        return 'completed';
       default:
         return 'pending';
     }
@@ -225,7 +224,7 @@ export default function OrdersPage() {
           </div>
         </div>
         <Button
-          onClick={() => router.push('/admin/orders/new')}
+          onClick={() => router.push('/owner/orders/new')}
           className="bg-[#FF7300] text-white hover:bg-[#FF7300]/90"
         >
           <Plus className="w-4 h-4 mr-2" />

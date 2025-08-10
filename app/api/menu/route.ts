@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
-import { CATEGORIES, CATEGORY_IMAGES, DEFAULT_IMAGE, CATEGORY_SETTINGS, type Category } from '@/app/admin/menu/constants';
+import { CATEGORIES, CATEGORY_IMAGES, DEFAULT_IMAGE, CATEGORY_SETTINGS, type Category } from '@/owner/menu/constants';
 
 interface Variant {
   size: string;
@@ -15,9 +15,8 @@ interface Addon {
 }
 
 export async function GET() {
-  let db;
   try {
-    db = await connectToDatabase();
+    const { db } = await connectToDatabase();
     const items = await db.collection('menu')
       .find({})
       .sort({ category: 1, name: 1 })
@@ -38,7 +37,6 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  let db;
   try {
     const body = await request.json();
     
@@ -91,7 +89,7 @@ export async function POST(request: Request) {
         : []
     };
 
-    db = await connectToDatabase();
+    const { db } = await connectToDatabase();
     const result = await db.collection('menu').insertOne(menuItemData);
 
     return NextResponse.json({ 
@@ -109,7 +107,6 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
-  let db;
   try {
     const body = await request.json();
     const { id, ...updateData } = body;
@@ -136,7 +133,7 @@ export async function PUT(request: Request) {
       }, { status: 400 });
     }
 
-    db = await connectToDatabase();
+    const { db } = await connectToDatabase();
 
     // Get existing item
     const existingItem = await db.collection('menu').findOne({ 
@@ -209,7 +206,6 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
-  let db;
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();
@@ -221,7 +217,7 @@ export async function DELETE(request: Request) {
       }, { status: 400 });
     }
 
-    db = await connectToDatabase();
+    const { db } = await connectToDatabase();
     const result = await db.collection('menu').deleteOne({ 
       _id: new ObjectId(id) 
     });

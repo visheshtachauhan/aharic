@@ -53,9 +53,31 @@ export function AuthProvider({ children, session }: AuthProviderProps) {
       const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN === 'true';
       const isDemoCreds = email === 'demo@aaharic.com' && password === 'Demo@123';
       
+      console.log('🔐 Login attempt:', { email, demoLockdown, isDemoCreds });
+      
       if (demoLockdown && isDemoCreds) {
-        // Set demo owner cookie and create a mock user session
-        document.cookie = 'demoOwner=1; path=/; max-age=86400; SameSite=Lax';
+        console.log('🚀 Attempting demo login via API...');
+        
+        // Use API route for demo login to ensure proper cookie handling
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+          credentials: 'include',
+        });
+
+        console.log('📡 Demo login response:', { status: response.status, ok: response.ok });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          console.error('❌ Demo login failed:', errorData);
+          throw new Error(errorData.error || 'Demo login failed');
+        }
+
+        const data = await response.json();
+        console.log('✅ Demo login success:', data);
         
         // Create a mock user object for demo purposes
         const mockUser: User = {
@@ -90,12 +112,15 @@ export function AuthProvider({ children, session }: AuthProviderProps) {
         return;
       }
       
+      console.log('🔑 Attempting regular Supabase login...');
+      
       // Regular Supabase login
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       toast.success("Signed in successfully.");
     } catch (e: unknown) {
       const error = e as Error;
+      console.error('💥 Login error:', error);
       toast.error(error.message || "Failed to sign in. Please check your credentials and try again.");
       throw error;
     } finally {

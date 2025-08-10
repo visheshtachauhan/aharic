@@ -26,6 +26,24 @@ export default function DashboardContent() {
     );
   }
 
-  // Rest of your dashboard code...
-  // ... (keep all the existing dashboard code)
+  return (
+    <div className="p-6 space-y-4">
+      <h1 className="text-2xl font-semibold">Owner Dashboard</h1>
+      <p className="text-muted-foreground">Welcome back{user ? `, ${user.email}` : ''}.</p>
+      <div className="grid gap-4 grid-cols-1 md:grid-cols-3">
+        <div className="rounded-lg border p-4">
+          <div className="text-sm text-muted-foreground">Today's Orders</div>
+          <div className="text-2xl font-bold">—</div>
+        </div>
+        <div className="rounded-lg border p-4">
+          <div className="text-sm text-muted-foreground">Revenue</div>
+          <div className="text-2xl font-bold">—</div>
+        </div>
+        <div className="rounded-lg border p-4">
+          <div className="text-sm text-muted-foreground">Pending Payments</div>
+          <div className="text-2xl font-bold">—</div>
+        </div>
+      </div>
+    </div>
+  );
 } 
