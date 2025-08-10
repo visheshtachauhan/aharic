@@ -60,7 +60,7 @@ export async function middleware(request: NextRequest) {
 
   const { pathname } = request.nextUrl;
 
-  // Handle legacy route redirects
+  // Legacy route redirects
   if (pathname === '/login') {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
@@ -79,60 +79,49 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Define public routes in normal mode
-  const publicRoutes = [
-    '/',
-    '/intro',
-    '/menu',
-    '/restaurants',
-    '/restaurant',
-    '/checkout',
-    '/orders',
-    '/auth/login',
-    '/auth/signup',
-    '/auth/forgot-password',
-    '/auth/reset-password',
-    '/auth/logout'
-  ]
+  // Public routes
+  const publicRoutes = ['/intro', '/auth/login', '/auth/signup']
+  const isPublicRoute = publicRoutes.some((route) => pathname === route)
 
+  // Demo lockdown flag (kept for clarity, behavior already enforces strict public routes)
   const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN === 'true'
 
-  const isPublicRoute = publicRoutes.some(route => {
-    if (route === '/restaurant') {
-      return pathname.startsWith('/restaurant')
-    }
-    return pathname === route || pathname.startsWith(route + '/')
-  })
+  // Authentication status
+  const isAuthenticated = Boolean(user)
 
-  const hasDemoOwner = request.cookies.get('demoOwner')?.value === '1'
-  const isAuthenticated = Boolean(user) || (demoLockdown && hasDemoOwner)
+  // Role helpers
+  const role: string | undefined = (user as any)?.user_metadata?.role || (user as any)?.app_metadata?.role
+  const isOwnerRoute = pathname.startsWith('/owner')
+  const isSuperadminRoute = pathname.startsWith('/superadmin')
 
-  if (demoLockdown) {
-    // During demo, only allow auth pages and intro without login
-    const isAuthRoute = pathname.startsWith('/auth')
-    const isIntro = pathname === '/intro' || pathname === '/'
-    if (!isAuthRoute && !isIntro && isPublicRoute && !isAuthenticated) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      return NextResponse.redirect(url)
-    }
-  }
-
-  // If no user and trying to access protected route, redirect to login
+  // Enforce auth for all non-public routes
   if (!isAuthenticated && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
   }
 
-  // If user is logged in and trying to access auth pages, redirect to dashboard
+  // Role-based protections (only after authenticated)
+  if (isAuthenticated && isOwnerRoute && role !== 'owner') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    return NextResponse.redirect(url)
+  }
+
+  if (isAuthenticated && isSuperadminRoute && role !== 'superadmin') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    return NextResponse.redirect(url)
+  }
+
+  // Prevent accessing auth pages when logged in
   if (isAuthenticated && pathname.startsWith('/auth')) {
     const url = request.nextUrl.clone()
     url.pathname = '/owner/dashboard'
     return NextResponse.redirect(url)
   }
 
-  // If user is logged in and trying to access intro page, redirect to dashboard
+  // Redirect authenticated users away from intro
   if (isAuthenticated && pathname === '/intro') {
     const url = request.nextUrl.clone()
     url.pathname = '/owner/dashboard'
