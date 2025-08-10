@@ -16,19 +16,33 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleLogin = async (e?: React.FormEvent<HTMLFormElement>) => {
+    if (e) e.preventDefault();
     setLoading(true);
     setError(null);
     try {
       await login(email, password);
-      router.push('/admin/dashboard');
+      router.push('/owner/dashboard');
     } catch (e: unknown) {
       const err = e as Error;
       setError(err.message || 'An unexpected error occurred.');
+      // Optional demo fallback: if enabled, set a demo cookie to bypass for demo-only
+      const demoFallbackEnabled = process.env.NEXT_PUBLIC_DEMO_FALLBACK === 'true';
+      const isDemoCreds = email === 'demo@aaharic.com' && password === 'Demo@123';
+      if (demoFallbackEnabled && isDemoCreds) {
+        document.cookie = 'demoOwner=1; path=/; max-age=86400';
+        router.push('/owner/dashboard');
+        return;
+      }
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDemoLoginClick = async () => {
+    setEmail('demo@aaharic.com');
+    setPassword('Demo@123');
+    await handleLogin();
   };
 
   return (
@@ -59,9 +73,12 @@ export default function LoginPage() {
             />
           </div>
           {error && <p className="text-sm text-red-500">{error}</p>}
-          <div>
+          <div className="space-y-3">
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Logging in...' : 'Login'}
+            </Button>
+            <Button type="button" variant="outline" className="w-full" onClick={handleDemoLoginClick} disabled={loading}>
+              Use demo account
             </Button>
           </div>
         </form>

@@ -79,7 +79,7 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // Define public routes that don't require authentication
+  // Define public routes that don't require authentication (normal mode)
   const publicRoutes = [
     '/',
     '/intro',
@@ -94,7 +94,9 @@ export async function middleware(request: NextRequest) {
     '/auth/reset-password'
   ]
 
-  // Check if current path is a public route
+  // Demo lockdown: when enabled, redirect public pages to login except auth
+  const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN === 'true'
+
   const isPublicRoute = publicRoutes.some(route => {
     if (route === '/restaurant') {
       return pathname.startsWith('/restaurant')
@@ -102,22 +104,36 @@ export async function middleware(request: NextRequest) {
     return pathname === route || pathname.startsWith(route + '/')
   })
 
+  // Allow demo owner cookie as authenticated during demo
+  const hasDemoOwner = request.cookies.get('demoOwner')?.value === '1'
+  const isAuthenticated = Boolean(user) || (demoLockdown && hasDemoOwner)
+
+  if (demoLockdown) {
+    // During demo, force all public pages to login except auth routes
+    const isAuthRoute = pathname.startsWith('/auth')
+    if (!isAuthRoute && isPublicRoute && !isAuthenticated) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/login'
+      return NextResponse.redirect(url)
+    }
+  }
+
   // If no user and trying to access protected route, redirect to login
-  if (!user && !isPublicRoute) {
+  if (!isAuthenticated && !isPublicRoute) {
     const url = request.nextUrl.clone()
     url.pathname = '/auth/login'
     return NextResponse.redirect(url)
   }
 
   // If user is logged in and trying to access auth pages, redirect to dashboard
-  if (user && pathname.startsWith('/auth')) {
+  if (isAuthenticated && pathname.startsWith('/auth')) {
     const url = request.nextUrl.clone()
     url.pathname = '/owner/dashboard'
     return NextResponse.redirect(url)
   }
 
   // If user is logged in and trying to access intro page, redirect to dashboard
-  if (user && pathname === '/intro') {
+  if (isAuthenticated && pathname === '/intro') {
     const url = request.nextUrl.clone()
     url.pathname = '/owner/dashboard'
     return NextResponse.redirect(url)
