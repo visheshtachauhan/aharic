@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if demo credentials match
-    if (email === 'demo@aaharic.com' && password === 'Demo@123') {
+    if (email === 'demo@aaharic.com' && password === 'Demo123') {
       console.log('✅ Demo credentials valid, setting cookie');
       
       // Create response with demo owner cookie
