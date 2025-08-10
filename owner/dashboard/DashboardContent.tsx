@@ -10,7 +10,7 @@ export default function DashboardContent() {
 
   // Redirect if not authenticated
   useEffect(() => {
-    const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN === 'true';
+    const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN?.toLowerCase() === 'true';
     const hasDemoOwner = typeof document !== 'undefined' && document.cookie.includes('demoOwner=1');
     if (!loading && !user && !(demoLockdown && hasDemoOwner)) {
       router.push('/auth/login');

@@ -50,7 +50,7 @@ export function AuthProvider({ children, session }: AuthProviderProps) {
       setIsSigningIn(true);
       
       // Demo bypass check - if demo lockdown is enabled and demo credentials match
-      const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN === 'true';
+      const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN?.toLowerCase() === 'true';
       const isDemoCreds = email === 'demo@aaharic.com' && password === 'Demo@123';
       
       console.log('🔐 Login attempt:', { email, demoLockdown, isDemoCreds });

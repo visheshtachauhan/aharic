@@ -89,7 +89,7 @@ export async function middleware(request: NextRequest) {
   const isPublicRoute = publicRoutes.some((route) => pathname === route)
 
   // Demo lockdown and demo cookie (treat as authenticated owner during demo)
-  const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN === 'true'
+  const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN?.toLowerCase() === 'true'
   const hasDemoOwner = demoLockdown && request.cookies.get('demoOwner')?.value === '1'
 
   // Authentication status

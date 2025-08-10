@@ -5,18 +5,27 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { email, password } = body;
 
-    // Check if demo lockdown is enabled
-    const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN === 'true';
+    // Check if demo lockdown is enabled (case-insensitive)
+    const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN?.toLowerCase() === 'true';
+    
+    console.log('🔐 Demo login attempt:', { 
+      email, 
+      demoLockdown, 
+      envValue: process.env.NEXT_PUBLIC_DEMO_LOCKDOWN 
+    });
     
     if (!demoLockdown) {
+      console.log('❌ Demo mode not enabled');
       return NextResponse.json(
-        { error: 'Demo mode not enabled' },
+        { error: 'Demo mode not enabled', envValue: process.env.NEXT_PUBLIC_DEMO_LOCKDOWN },
         { status: 400 }
       );
     }
 
     // Check if demo credentials match
     if (email === 'demo@aaharic.com' && password === 'Demo@123') {
+      console.log('✅ Demo credentials valid, setting cookie');
+      
       // Create response with demo owner cookie
       const response = NextResponse.json(
         { 
@@ -40,9 +49,11 @@ export async function POST(request: NextRequest) {
         sameSite: 'lax'
       });
 
+      console.log('🍪 Demo owner cookie set successfully');
       return response;
     }
 
+    console.log('❌ Invalid demo credentials');
     // If not demo credentials, return error
     return NextResponse.json(
       { error: 'Invalid demo credentials' },
@@ -50,9 +61,9 @@ export async function POST(request: NextRequest) {
     );
 
   } catch (error) {
-    console.error('Demo login error:', error);
+    console.error('💥 Demo login error:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
