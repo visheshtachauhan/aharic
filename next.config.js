@@ -89,6 +89,12 @@ const nextConfig = {
 
       // Enable minification
       config.optimization.minimize = true;
+
+      // Suppress known third-party warning from supabase realtime client
+      config.ignoreWarnings = [
+        ...(config.ignoreWarnings || []),
+        /Critical dependency: the request of a dependency is an expression/,
+      ];
     }
 
     // Add module aliases for better imports
