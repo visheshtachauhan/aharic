@@ -48,6 +48,49 @@ export function AuthProvider({ children, session }: AuthProviderProps) {
   const login = async (email: string, password: string) => {
     try {
       setIsSigningIn(true);
+      
+      // Demo bypass check - if demo lockdown is enabled and demo credentials match
+      const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN === 'true';
+      const isDemoCreds = email === 'demo@aaharic.com' && password === 'Demo@123';
+      
+      if (demoLockdown && isDemoCreds) {
+        // Set demo owner cookie and create a mock user session
+        document.cookie = 'demoOwner=1; path=/; max-age=86400; SameSite=Lax';
+        
+        // Create a mock user object for demo purposes
+        const mockUser: User = {
+          id: 'demo-user-id',
+          email: 'demo@aaharic.com',
+          user_metadata: { role: 'owner' },
+          app_metadata: { role: 'owner' },
+          aud: 'authenticated',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          email_confirmed_at: new Date().toISOString(),
+          last_sign_in_at: new Date().toISOString(),
+          role: 'owner',
+          confirmation_sent_at: null,
+          confirmed_at: null,
+          invited_at: null,
+          recovery_sent_at: null,
+          phone: null,
+          phone_confirmed_at: null,
+          banned_until: null,
+          reauthentication_sent_at: null,
+          reauthentication_confirmed_at: null,
+          email_change_confirm_status: null,
+          new_email: null,
+          new_phone: null,
+          factors: null,
+          identities: [],
+        } as any;
+        
+        setUser(mockUser);
+        toast.success("Demo login successful!");
+        return;
+      }
+      
+      // Regular Supabase login
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       toast.success("Signed in successfully.");
@@ -78,8 +121,16 @@ export function AuthProvider({ children, session }: AuthProviderProps) {
   const signOut = async () => {
     try {
       setIsSigningOut(true);
+      
+      // Clear demo cookie if present
+      document.cookie = 'demoOwner=; path=/; max-age=0; SameSite=Lax';
+      
+      // Regular Supabase signout
       const { error } = await supabase.auth.signOut();
       if (error) throw error;
+      
+      // Clear user state
+      setUser(null);
       toast.success("Signed out successfully.");
     } catch (e: unknown) {
       const error = e as Error;

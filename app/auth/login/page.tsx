@@ -26,14 +26,6 @@ export default function LoginPage() {
     } catch (e: unknown) {
       const err = e as Error;
       setError(err.message || 'An unexpected error occurred.');
-      // Optional demo fallback: if enabled, set a demo cookie to bypass for demo-only
-      const demoFallbackEnabled = process.env.NEXT_PUBLIC_DEMO_FALLBACK === 'true';
-      const isDemoCreds = email === 'demo@aaharic.com' && password === 'Demo@123';
-      if (demoFallbackEnabled && isDemoCreds) {
-        document.cookie = 'demoOwner=1; path=/; max-age=86400';
-        router.push('/owner/dashboard');
-        return;
-      }
     } finally {
       setLoading(false);
     }
