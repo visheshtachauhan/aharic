@@ -35,7 +35,8 @@ export async function POST(request: NextRequest) {
             email: 'demo@aaharic.com',
             role: 'owner'
           },
-          message: 'Demo login successful'
+          message: 'Demo login successful',
+          version: 'v1.1'
         },
         { status: 200 }
       );
