@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -30,6 +30,82 @@ export default function OwnerSettingsPage() {
     serviceCharge: 5,
     taxes: 8.5
   });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
+  // Fetch settings on mount
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        setIsLoading(true);
+        const response = await fetch('/api/owner/settings');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.settings) {
+            setRestaurant(data.settings.restaurant || restaurant);
+            setBusiness(data.settings.business || business);
+            setNotifications(data.settings.notifications || notifications);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching settings:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSettings();
+  }, []);
+
+  // Save settings function
+  const saveSettings = async (section: 'restaurant' | 'business' | 'notifications') => {
+    try {
+      setIsSaving(true);
+      const payload = { [section]: section === 'restaurant' ? restaurant : section === 'business' ? business : notifications };
+      
+      const response = await fetch('/api/owner/settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          // Update local state with server response
+          if (data.settings) {
+            setRestaurant(data.settings.restaurant || restaurant);
+            setBusiness(data.settings.business || business);
+            setNotifications(data.settings.notifications || notifications);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto p-6 space-y-6">
+        <div className="flex items-center gap-3">
+          <Settings className="w-8 h-8 text-primary" />
+          <h1 className="text-3xl font-bold">Restaurant Settings</h1>
+        </div>
+        <div className="flex items-center justify-center py-12">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading settings...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -89,7 +165,13 @@ export default function OwnerSettingsPage() {
                 />
               </div>
             </div>
-            <Button className="w-full">Save Changes</Button>
+            <Button 
+              className="w-full" 
+              onClick={() => saveSettings('restaurant')}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save Changes'}
+            </Button>
           </CardContent>
         </Card>
 
@@ -163,7 +245,13 @@ export default function OwnerSettingsPage() {
               </div>
             </div>
             
-            <Button className="w-full">Update Business Settings</Button>
+            <Button 
+              className="w-full" 
+              onClick={() => saveSettings('business')}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Update Business Settings'}
+            </Button>
           </CardContent>
         </Card>
 
@@ -218,7 +306,13 @@ export default function OwnerSettingsPage() {
               />
             </div>
             
-            <Button className="w-full">Save Preferences</Button>
+            <Button 
+              className="w-full" 
+              onClick={() => saveSettings('notifications')}
+              disabled={isSaving}
+            >
+              {isSaving ? 'Saving...' : 'Save Preferences'}
+            </Button>
           </CardContent>
         </Card>
 
