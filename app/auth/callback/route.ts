@@ -1,15 +1,6 @@
-import { createClient } from '@/lib/supabase/server'
-import { NextResponse } from 'next/server'
+// TODO(demo): auth disabled temporarily for demo. Re-enable after backend auth is ready.
+import { NextRequest, NextResponse } from 'next/server';
 
-export async function GET(request: Request) {
-  const requestUrl = new URL(request.url)
-  const code = requestUrl.searchParams.get('code')
-
-  if (code) {
-    const supabase = createClient()
-    await supabase.auth.exchangeCodeForSession(code)
-  }
-
-  // URL to redirect to after sign in process completes
-  return NextResponse.redirect(requestUrl.origin)
+export async function GET(request: NextRequest) {
+  return NextResponse.redirect(new URL('/auth/login', request.url));
 } 

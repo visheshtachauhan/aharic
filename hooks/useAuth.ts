@@ -1,76 +1,41 @@
+// TODO(demo): auth disabled temporarily for demo. Re-enable after backend auth is ready.
 import { useRouter } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import { useState } from 'react';
 
 export function useAuth() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const supabase = createClient();
 
   const signIn = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) throw error;
-      router.refresh();
-      router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
+    setLoading(true);
+    setTimeout(() => {
       setLoading(false);
-    }
+      router.push('/owner/dashboard');
+    }, 1000);
   };
 
   const signUp = async (email: string, password: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const { error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-      if (error) throw error;
-      router.refresh();
-      router.push('/auth/verify');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
+    setLoading(true);
+    setTimeout(() => {
       setLoading(false);
-    }
+      router.push('/auth/login');
+    }, 1000);
   };
 
   const signOut = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const { error } = await supabase.auth.signOut();
-      if (error) throw error;
-      router.refresh();
-      router.push('/auth/login');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
+    setLoading(true);
+    setTimeout(() => {
       setLoading(false);
-    }
+      router.push('/auth/login');
+    }, 500);
   };
 
   const resetPassword = async (email: string) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const { error } = await supabase.auth.resetPasswordForEmail(email);
-      if (error) throw error;
-      router.push('/auth/reset-password-sent');
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
+    setLoading(true);
+    setTimeout(() => {
       setLoading(false);
-    }
+    }, 1000);
   };
 
   return {
