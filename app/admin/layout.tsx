@@ -28,23 +28,26 @@ export default function AdminLayout({
 
   const supabase = createBrowserClient(supabaseUrl, supabaseAnonKey);
 
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setUserState(session?.user ?? null);
-      if (!session?.user) {
-        void router.push('/auth/login');
-      }
-    });
+  // TODO(demo): auth disabled temporarily for demo. Re-enable after backend auth is ready.
+  // useEffect(() => {
+  //   const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+  //     setUserState(session?.user ?? null);
+  //     if (!session?.user) {
+  //       void router.push('/auth/login');
+  //     }
+  //   });
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [supabase, router]);
+  //   return () => {
+  //     subscription.unsubscribe();
+  //   };
+  // }, [supabase, router]);
 
+  // TODO(demo): auth disabled temporarily for demo. Re-enable after backend auth is ready.
   const handleSignOut = async () => {
     try {
-      await supabase.auth.signOut();
-      void router.push('/auth/login');
+      // await supabase.auth.signOut();
+      // void router.push('/auth/login');
+      console.log('Demo mode: sign out disabled');
     } catch (error) {
       toast({
         title: 'Error',
@@ -77,9 +80,10 @@ export default function AdminLayout({
     },
   ];
 
-  if (!userState) {
-    return null;
-  }
+  // TODO(demo): auth disabled temporarily for demo. Re-enable after backend auth is ready.
+  // if (!userState) {
+  //   return null;
+  // }
 
   return (
     <div className="min-h-screen bg-background">

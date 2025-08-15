@@ -1,3 +1,6 @@
+// TEMP DISABLED FOR DEMO – Restore after adding env vars
+
+/*
 import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -80,7 +83,7 @@ export async function middleware(request: NextRequest) {
 
   if (pathname.startsWith('/admin')) {
     const url = request.nextUrl.clone()
-    url.pathname = pathname.replace('/admin', '/owner')
+    url.pathname = pathname.replace('/admin', '/dashboard')
     return NextResponse.redirect(url)
   }
 
@@ -99,7 +102,7 @@ export async function middleware(request: NextRequest) {
   let role: string | undefined = (user as any)?.user_metadata?.role || (user as any)?.app_metadata?.role
   if (!role && hasDemoOwner) role = 'owner'
 
-  const isOwnerRoute = pathname.startsWith('/owner')
+  const isOwnerRoute = pathname.startsWith('/dashboard')
   const isSuperadminRoute = pathname.startsWith('/superadmin')
 
   // Enforce auth for all non-public routes
@@ -125,14 +128,14 @@ export async function middleware(request: NextRequest) {
   // Prevent accessing auth pages when logged in
   if (isAuthenticated && pathname.startsWith('/auth')) {
     const url = request.nextUrl.clone()
-    url.pathname = '/owner/dashboard'
+    url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 
   // Redirect authenticated users away from intro
   if (isAuthenticated && pathname === '/intro') {
     const url = request.nextUrl.clone()
-    url.pathname = '/owner/dashboard'
+    url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 
@@ -141,6 +144,42 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|api|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|public).*)',
+  ],
+}
+*/
+
+// TODO(demo): auth disabled temporarily for demo. Re-enable after backend auth is ready.
+import { NextResponse, type NextRequest } from 'next/server'
+
+export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Legacy route redirects (keep these for demo)
+  if (pathname === '/login') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/login'
+    return NextResponse.redirect(url)
+  }
+
+  if (pathname === '/signup') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/auth/signup'
+    return NextResponse.redirect(url)
+  }
+
+  if (pathname.startsWith('/admin')) {
+    const url = request.nextUrl.clone()
+    url.pathname = pathname.replace('/admin', '/owner')
+    return NextResponse.redirect(url)
+  }
+
+  // Allow all routes for demo - no authentication required
+  return NextResponse.next()
+}
+
+export const config = {
+  matcher: [
+    '/((?!_next/static|_next/image|favicon.ico|public).*)',
   ],
 } 

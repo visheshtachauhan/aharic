@@ -8,14 +8,15 @@ export default function DashboardContent() {
   const router = useRouter();
   const { user, loading } = useAuth();
 
+  // TODO(demo): auth disabled temporarily for demo. Re-enable after backend auth is ready.
   // Redirect if not authenticated
-  useEffect(() => {
-    const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN?.toLowerCase() === 'true';
-    const hasDemoOwner = typeof document !== 'undefined' && document.cookie.includes('demoOwner=1');
-    if (!loading && !user && !(demoLockdown && hasDemoOwner)) {
-      router.push('/auth/login');
-    }
-  }, [user, loading, router]);
+  // useEffect(() => {
+  //   const demoLockdown = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN?.toLowerCase() === 'true';
+  //   const hasDemoOwner = typeof document !== 'undefined' && document.cookie.includes('demoOwner=1');
+  //   if (!loading && !user && !(demoLockdown && hasDemoOwner)) {
+  //     router.push('/auth/login');
+  //   }
+  // }, [user, loading, router]);
 
   // Show loading state
   if (loading) {
