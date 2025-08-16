@@ -1,1 +1,1 @@
-export * from '@/owner/menu/constants';
+export * from '@/app/owner/menu/constants';

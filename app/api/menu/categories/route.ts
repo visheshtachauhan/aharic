@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { CATEGORIES, type Category } from '@/owner/menu/constants';
+import { CATEGORIES, type Category } from '@/app/owner/menu/constants';
 
 export async function GET() {
   try {

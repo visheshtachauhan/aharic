@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
-import { CATEGORIES, CATEGORY_IMAGES, DEFAULT_IMAGE, CATEGORY_SETTINGS, type Category } from '@/owner/menu/constants';
+import { CATEGORIES, CATEGORY_IMAGES, DEFAULT_IMAGE, CATEGORY_SETTINGS, type Category } from '@/app/owner/menu/constants';
 
 interface Variant {
   size: string;

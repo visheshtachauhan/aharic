@@ -1,4 +1,4 @@
-import { CATEGORY_FALLBACKS, DEFAULT_FALLBACK, type Category } from '@/owner/menu/constants';
+import { CATEGORY_FALLBACKS, DEFAULT_FALLBACK, type Category } from '@/app/owner/menu/constants';
 
 export const validateImageUrl = (url: string): boolean => {
   if (!url) return false;
