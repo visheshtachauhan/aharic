@@ -1,10 +1,41 @@
-// TEMP DISABLED FOR DEMO – Restore after adding env vars
-
-/*
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+// Demo mode middleware - allows all routes when NEXT_PUBLIC_DEMO_LOCKDOWN=true
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+  
+  // Check if demo mode is enabled
+  const isDemoMode = process.env.NEXT_PUBLIC_DEMO_LOCKDOWN?.toLowerCase() === 'true';
+
+  // In demo mode, allow all routes without authentication
+  if (isDemoMode) {
+    // Legacy route redirects (keep these for demo)
+    if (pathname === '/login') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/login'
+      return NextResponse.redirect(url)
+    }
+
+    if (pathname === '/signup') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/signup'
+      return NextResponse.redirect(url)
+    }
+
+    if (pathname.startsWith('/admin')) {
+      const url = request.nextUrl.clone()
+      url.pathname = pathname.replace('/admin', '/owner')
+      return NextResponse.redirect(url)
+    }
+
+    // Allow all routes including /owner/* without any redirects
+    return NextResponse.next()
+  }
+
+  // Production mode - full authentication (commented out for now)
+  /*
+  import { createServerClient, type CookieOptions } from '@supabase/ssr'
+
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -60,8 +91,6 @@ export async function middleware(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  const { pathname } = request.nextUrl;
 
   // Bypass middleware for API routes to avoid breaking fetch calls
   if (pathname.startsWith('/api')) {
@@ -140,41 +169,9 @@ export async function middleware(request: NextRequest) {
   }
 
   return response
-}
+  */
 
-export const config = {
-  matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|public).*)',
-  ],
-}
-*/
-
-// TODO(demo): auth disabled temporarily for demo. Re-enable after backend auth is ready.
-import { NextResponse, type NextRequest } from 'next/server'
-
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  // Legacy route redirects (keep these for demo)
-  if (pathname === '/login') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/login'
-    return NextResponse.redirect(url)
-  }
-
-  if (pathname === '/signup') {
-    const url = request.nextUrl.clone()
-    url.pathname = '/auth/signup'
-    return NextResponse.redirect(url)
-  }
-
-  if (pathname.startsWith('/admin')) {
-    const url = request.nextUrl.clone()
-    url.pathname = pathname.replace('/admin', '/owner')
-    return NextResponse.redirect(url)
-  }
-
-  // Allow all routes for demo - no authentication required
+  // Default fallback - allow all routes
   return NextResponse.next()
 }
 
