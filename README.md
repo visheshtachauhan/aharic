@@ -86,6 +86,33 @@ TWILIO_AUTH_TOKEN=your_twilio_auth_token
 TWILIO_PHONE_NUMBER=your_twilio_phone_number
 ```
 
+## Demo vs Production Modes
+
+The system supports two operational modes controlled by the `NEXT_PUBLIC_DEMO_LOCKDOWN` environment variable:
+
+### Demo Mode ON (`NEXT_PUBLIC_DEMO_LOCKDOWN=true`)
+- **Owner Routes**: All `/owner/*` routes are accessible without authentication
+- **Auth Pages**: Login/signup pages show demo messages and redirect to owner dashboard
+- **Middleware**: Authentication checks are bypassed, all routes allowed
+- **Use Case**: Perfect for demos, testing, and development
+
+### Production Mode ON (`NEXT_PUBLIC_DEMO_LOCKDOWN=false`)
+- **Owner Routes**: Protected by authentication, require valid user session
+- **Auth Pages**: Full authentication system active
+- **Middleware**: Full authentication and role-based access control
+- **Use Case**: Production deployment with security
+
+### Switching Modes
+```bash
+# Demo Mode
+NEXT_PUBLIC_DEMO_LOCKDOWN=true
+
+# Production Mode  
+NEXT_PUBLIC_DEMO_LOCKDOWN=false
+```
+
+**Current Production Setting**: `NEXT_PUBLIC_DEMO_LOCKDOWN=true` (Demo mode active)
+
 ## Available Scripts
 
 - `npm run dev`
