@@ -19,6 +19,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { TableManagement } from "@/components/dashboard/table-management";
+import { RevenueChart } from "@/components/dashboard/revenue-chart";
+import { PendingPayments } from "@/components/dashboard/pending-payments";
+import { TopItems } from "@/components/dashboard/top-items";
 
 type SortOption = 'newest' | 'oldest' | 'highest' | 'lowest';
 type FilterOption = 'all' | 'pending' | 'in-progress' | 'completed';
@@ -370,6 +373,18 @@ export default function DashboardContent() {
               </Card>
             </div>
 
+            {/* Overview Panels (restored) */}
+            <div className="grid gap-6 grid-cols-1 md:grid-cols-3">
+              <div className="md:col-span-2">
+                <RevenueChart />
+              </div>
+              <div>
+                <TopItems />
+              </div>
+            </div>
+
+            <PendingPayments />
+
             <Card className="p-6">
               <h2 className="text-xl font-semibold mb-4">Recent Orders</h2>
               <div className="space-y-3">
@@ -450,7 +465,7 @@ export default function DashboardContent() {
                         <SelectItem value="lowest">Lowest Amount</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
+        </div>
                   <div>
                     <label className="text-sm font-medium text-gray-500">Filter by</label>
                     <Select value={filterBy} onValueChange={(value) => setFilterBy(value as FilterOption)}>
@@ -464,8 +479,8 @@ export default function DashboardContent() {
                         <SelectItem value="completed">Completed</SelectItem>
                       </SelectContent>
                     </Select>
-                  </div>
-                </div>
+        </div>
+        </div>
               </div>
             </div>
 
