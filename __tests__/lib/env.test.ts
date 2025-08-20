@@ -3,7 +3,7 @@ jest.mock('@/lib/env', () => ({
     MONGODB_URI: 'mongodb://localhost:27017/test',
     NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co',
     NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-key',
-    NEXT_PUBLIC_APP_URL: 'http://localhost:3000',
+    NEXT_PUBLIC_APP_URL: 'https://aaharic.me',
     SMTP_HOST: 'smtp.gmail.com',
     SMTP_PORT: '587',
     SMTP_USER: 'test@example.com',
@@ -31,7 +31,7 @@ describe('Environment Variables', () => {
   });
 
   it('should have default values for optional variables', () => {
-    expect(env.NEXT_PUBLIC_APP_URL).toBe('http://localhost:3000');
+    expect(env.NEXT_PUBLIC_APP_URL).toBe('https://aaharic.me');
     expect(env.SMTP_HOST).toBe('smtp.gmail.com');
     expect(env.SMTP_PORT).toBe('587');
   });

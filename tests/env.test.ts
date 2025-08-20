@@ -8,7 +8,7 @@ describe('Environment Variables', () => {
   });
 
   it('should have default values for optional variables', () => {
-    expect(env.NEXT_PUBLIC_APP_URL).toBe('http://localhost:3000');
+    expect(env.NEXT_PUBLIC_APP_URL).toBe('https://aaharic.me');
     expect(env.SMTP_HOST).toBe('smtp.gmail.com');
     expect(env.SMTP_PORT).toBe('587');
   });

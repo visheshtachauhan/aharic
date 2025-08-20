@@ -107,7 +107,7 @@ const nextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000'],
+              allowedOrigins: ['localhost:3000', 'aaharic.me', 'https://aaharic.me'],
       bodySizeLimit: '2mb'
     },
     optimizeCss: true, // Enable CSS optimization

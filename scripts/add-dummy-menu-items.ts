@@ -86,7 +86,7 @@ const dummyMenuItems = [
   }
 ];
 
-const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'https://aaharic.me';
 
 async function addDummyMenuItems() {
   let successCount = 0;

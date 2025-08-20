@@ -21,7 +21,7 @@ export default function QRGenerator({ value, size = 256 }: QRGeneratorProps) {
     setError(null);
     if (value) {
       // Try to shorten the URL if it's too long
-      const shortenedValue = value.replace('http://localhost:3000/', '/');
+      const shortenedValue = value.replace(process.env.NEXT_PUBLIC_BASE_URL || 'https://aaharic.me', '');
       setQrConfig(prev => ({
         ...prev,
         value: shortenedValue,
