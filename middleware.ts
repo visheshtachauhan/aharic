@@ -2,8 +2,13 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  // Bypass all auth if DEMO_AUTH_DISABLED is true
-  if (process.env.DEMO_AUTH_DISABLED === 'true') {
+  // Bypass all auth for demo mode toggles
+  const demoBypass =
+    (process.env.DEMO_AUTH_DISABLED?.toLowerCase() === 'true') ||
+    (process.env.NEXT_PUBLIC_DEMO_AUTH_DISABLED?.toLowerCase() === 'true') ||
+    (process.env.NEXT_PUBLIC_DEMO_LOCKDOWN?.toLowerCase() === 'true')
+
+  if (demoBypass) {
     return NextResponse.next()
   }
 
