@@ -27,6 +27,8 @@ export default async function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  // Demo flag for production verification (temporary)
+  console.log('DEMO_AUTH_DISABLED=', process.env.DEMO_AUTH_DISABLED);
   const supabase = createClient();
   const {
     data: { session },
