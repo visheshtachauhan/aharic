@@ -4,6 +4,10 @@ import { useState } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { 
+  Clock, 
+  CheckCircle2, 
+  AlertCircle,
+  ChevronRight,
   Search
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
@@ -107,6 +111,14 @@ const statusColors = {
   ready: 'bg-green-100 text-green-800',
   delivered: 'bg-gray-100 text-gray-800',
   cancelled: 'bg-red-100 text-red-800',
+};
+
+const statusIcons = {
+  pending: Clock,
+  preparing: AlertCircle,
+  ready: CheckCircle2,
+  delivered: CheckCircle2,
+  cancelled: AlertCircle,
 };
 
 export default function OrdersPage() {

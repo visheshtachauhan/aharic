@@ -1,3 +1,4 @@
+// Product-approved Dashboard overview. Do NOT remove these panels (KPIs, Revenue Trend, Top Items, Payments, Recent Orders). Changes must preserve this composition.
 "use client";
 
 import { useState } from "react";

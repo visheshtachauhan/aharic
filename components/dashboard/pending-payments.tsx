@@ -1,3 +1,4 @@
+// Product-approved Dashboard overview. Do NOT remove these panels (KPIs, Revenue Trend, Top Items, Payments, Recent Orders). Changes must preserve this composition.
 "use client";
 
 import { useState } from "react";
@@ -23,7 +24,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar } from "@/components/ui/avatar";
 import { RupeeIcon } from "@/components/icons/rupee-icon";
-import { createLogger } from '@/lib/logger';
 
 interface PendingPayment {
   id: string;
@@ -37,7 +37,12 @@ interface PendingPayment {
   daysPending: number;
 }
 
-const logger = createLogger('pending-payments');
+// Client-safe logger (avoid importing server-only logger in client bundles)
+const logger = {
+  info: (...args: any[]) => console.info('[pending-payments]', ...args),
+  error: (...args: any[]) => console.error('[pending-payments]', ...args),
+  warn: (...args: any[]) => console.warn('[pending-payments]', ...args),
+};
 
 export function PendingPayments() {
   const [payments, setPayments] = useState<PendingPayment[]>([
