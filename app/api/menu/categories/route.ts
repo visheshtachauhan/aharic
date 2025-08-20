@@ -1,22 +1,23 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { CATEGORIES, type Category } from '@/owner/menu/constants';
+import { CATEGORIES } from '@/app/admin/menu/constants';
 
 export async function GET() {
+  let db;
   try {
-    const { db } = await connectToDatabase();
+    db = await connectToDatabase();
     const categories = await db.collection('menu')
       .aggregate([
         { $group: { _id: '$category', count: { $sum: 1 } } },
         { $sort: { _id: 1 } }
       ])
-      .toArray() as Array<{ _id: string; count: number }>;
+      .toArray();
 
     // Map categories to include predefined settings
-    const mappedCategories = categories.map((cat) => ({
+    const mappedCategories = categories.map(cat => ({
       name: cat._id,
       count: cat.count,
-      isActive: CATEGORIES.includes(cat._id as Category)
+      isActive: CATEGORIES.includes(cat._id)
     }));
 
     return NextResponse.json({
@@ -34,6 +35,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  let db;
   try {
     const body = await request.json();
     
@@ -47,7 +49,7 @@ export async function POST(request: Request) {
     const categoryName = body.name.trim();
 
     // Check if category already exists
-    const { db } = await connectToDatabase();
+    db = await connectToDatabase();
     const existingCategory = await db.collection('menu_categories').findOne({
       name: { $regex: new RegExp(`^${categoryName}$`, 'i') }
     });

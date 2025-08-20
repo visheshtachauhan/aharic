@@ -1,22 +1,12 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { ObjectId } from 'mongodb';
-import { CATEGORIES, CATEGORY_IMAGES, DEFAULT_IMAGE, CATEGORY_SETTINGS, type Category } from '@/owner/menu/constants';
-
-interface Variant {
-  size: string;
-  price: number;
-}
-
-interface Addon {
-  id: string;
-  name: string;
-  price: number;
-}
+import { CATEGORIES, CATEGORY_IMAGES, DEFAULT_IMAGE, CATEGORY_SETTINGS, type Category } from '@/app/admin/menu/constants';
 
 export async function GET() {
+  let db;
   try {
-    const { db } = await connectToDatabase();
+    db = await connectToDatabase();
     const items = await db.collection('menu')
       .find({})
       .sort({ category: 1, name: 1 })
@@ -26,7 +16,7 @@ export async function GET() {
       success: true, 
       items: items || [] 
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error fetching menu items:', error);
     return NextResponse.json({ 
       success: false, 
@@ -37,6 +27,7 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  let db;
   try {
     const body = await request.json();
     
@@ -69,7 +60,7 @@ export async function POST(request: Request) {
       // Handle variants
       hasVariants: categorySettings.hasVariants,
       variants: categorySettings.hasVariants 
-        ? (body.variants || categorySettings.defaultVariants || []).map((variant: Variant) => ({
+        ? (body.variants || categorySettings.defaultVariants || []).map((variant: any) => ({
             size: variant.size,
             price: Math.max(0, parseFloat(variant.price?.toString() || '0') || 0)
           }))
@@ -81,7 +72,7 @@ export async function POST(request: Request) {
       // Handle add-ons
       allowCustomizations: categorySettings.allowCustomizations,
       availableAddOns: categorySettings.allowCustomizations
-        ? (body.availableAddOns || categorySettings.availableAddOns || []).map((addon: Addon) => ({
+        ? (body.availableAddOns || categorySettings.availableAddOns || []).map((addon: any) => ({
             id: addon.id,
             name: addon.name,
             price: Math.max(0, parseFloat(addon.price?.toString() || '0') || 0)
@@ -89,7 +80,7 @@ export async function POST(request: Request) {
         : []
     };
 
-    const { db } = await connectToDatabase();
+    db = await connectToDatabase();
     const result = await db.collection('menu').insertOne(menuItemData);
 
     return NextResponse.json({ 
@@ -97,7 +88,7 @@ export async function POST(request: Request) {
       message: 'Menu item created successfully',
       itemId: result.insertedId
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error creating menu item:', error);
     return NextResponse.json({ 
       success: false, 
@@ -107,6 +98,7 @@ export async function POST(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  let db;
   try {
     const body = await request.json();
     const { id, ...updateData } = body;
@@ -133,7 +125,7 @@ export async function PUT(request: Request) {
       }, { status: 400 });
     }
 
-    const { db } = await connectToDatabase();
+    db = await connectToDatabase();
 
     // Get existing item
     const existingItem = await db.collection('menu').findOne({ 
@@ -160,7 +152,7 @@ export async function PUT(request: Request) {
       // Handle variants
       hasVariants: categorySettings.hasVariants,
       variants: categorySettings.hasVariants 
-        ? (updateData.variants || existingItem.variants || categorySettings.defaultVariants || []).map((variant: Variant) => ({
+        ? (updateData.variants || existingItem.variants || categorySettings.defaultVariants || []).map((variant: any) => ({
             size: variant.size,
             price: Math.max(0, parseFloat(variant.price?.toString() || '0') || 0)
           }))
@@ -172,7 +164,7 @@ export async function PUT(request: Request) {
       // Handle add-ons
       allowCustomizations: categorySettings.allowCustomizations,
       availableAddOns: categorySettings.allowCustomizations
-        ? (updateData.availableAddOns || existingItem.availableAddOns || categorySettings.availableAddOns || []).map((addon: Addon) => ({
+        ? (updateData.availableAddOns || existingItem.availableAddOns || categorySettings.availableAddOns || []).map((addon: any) => ({
             id: addon.id,
             name: addon.name,
             price: Math.max(0, parseFloat(addon.price?.toString() || '0') || 0)
@@ -196,7 +188,7 @@ export async function PUT(request: Request) {
       success: true,
       message: 'Menu item updated successfully'
     });
-  } catch (error: unknown) {
+  } catch (error) {
     console.error('Error updating menu item:', error);
     return NextResponse.json({ 
       success: false, 
@@ -206,6 +198,7 @@ export async function PUT(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  let db;
   try {
     const url = new URL(request.url);
     const id = url.pathname.split('/').pop();
@@ -217,7 +210,7 @@ export async function DELETE(request: Request) {
       }, { status: 400 });
     }
 
-    const { db } = await connectToDatabase();
+    db = await connectToDatabase();
     const result = await db.collection('menu').deleteOne({ 
       _id: new ObjectId(id) 
     });

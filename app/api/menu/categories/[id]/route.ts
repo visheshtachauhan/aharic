@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-// import { auth } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { ObjectId } from 'mongodb';
+import { CATEGORIES, type Category } from '@/app/admin/menu/constants';
 
 export async function GET(
   request: Request,
@@ -35,14 +36,13 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
-    // TODO: Implement authentication and authorization check here
-    // const session = await auth();
-    // if (!session || !['admin', 'restaurant_owner'].includes(session.user?.role as string)) {
-    //   return NextResponse.json(
-    //     { success: false, message: 'Unauthorized' },
-    //     { status: 401 }
-    //   );
-    // }
+    const session = await auth();
+    if (!session || !['admin', 'restaurant_owner'].includes(session.user?.role as string)) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
 
     const data = await request.json();
     const { availableAddOns, ...categorySettings } = data;
@@ -64,7 +64,7 @@ export async function PUT(
         $set: {
           ...categorySettings,
           updatedAt: new Date(),
-          // updatedBy: session.user.id // Uncomment when auth is implemented
+          updatedBy: session.user.id
         }
       }
     );
@@ -84,7 +84,7 @@ export async function PUT(
           $set: { 
             availableAddOns,
             updatedAt: new Date(),
-            // updatedBy: session.user.id // Uncomment when auth is implemented
+            updatedBy: session.user.id
           }
         }
       );

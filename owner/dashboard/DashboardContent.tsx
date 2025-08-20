@@ -386,7 +386,7 @@ export default function DashboardContent() {
               <div>
                 <TopItems />
               </div>
-            </div>
+        </div>
 
             <PendingPayments />
 
@@ -398,13 +398,13 @@ export default function DashboardContent() {
                     <div>
                       <p className="font-medium">Table {order.table}</p>
                       <p className="text-sm text-muted-foreground">{formatDate(order.createdAt)}</p>
-                    </div>
+        </div>
                     <div className="text-right">
                       <p className="font-medium">₹{order.amount}</p>
                       <span className={`inline-flex px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(order.status)}`}>
                         {order.status}
                       </span>
-                    </div>
+        </div>
                   </div>
                 ))}
                 {orders.length === 0 && (
